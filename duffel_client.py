@@ -1,5 +1,6 @@
 import os
 import re
+import time
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -9,6 +10,10 @@ from dotenv import load_dotenv
 
 ENV_PATH = Path(__file__).resolve().parent / ".env"
 DUFFEL_API_URL = "https://api.duffel.com"
+_PLACE_CACHE: dict[str, tuple[float, list[dict[str, Any]]]] = {}
+_PLACE_CACHE_TTL_SECONDS = 600
+_PLACE_CACHE_MAX_ENTRIES = 256
+_http_client: httpx.Client | None = None
 
 CABIN_CLASS_MAP = {
     "economy": "economy",
@@ -44,8 +49,39 @@ def credentials_configured() -> bool:
     return bool(_get_settings()["access_token"])
 
 
+def _get_http_client() -> httpx.Client:
+    global _http_client
+    if _http_client is None or _http_client.is_closed:
+        _http_client = httpx.Client(timeout=15.0)
+    return _http_client
+
+
+def _read_place_cache(query: str) -> list[dict[str, Any]] | None:
+    key = query.strip().lower()
+    cached = _PLACE_CACHE.get(key)
+    if not cached:
+        return None
+    cached_at, results = cached
+    if time.time() - cached_at > _PLACE_CACHE_TTL_SECONDS:
+        _PLACE_CACHE.pop(key, None)
+        return None
+    return results
+
+
+def _write_place_cache(query: str, results: list[dict[str, Any]]) -> None:
+    key = query.strip().lower()
+    _PLACE_CACHE[key] = (time.time(), results)
+    if len(_PLACE_CACHE) <= _PLACE_CACHE_MAX_ENTRIES:
+        return
+    oldest_key = min(_PLACE_CACHE, key=lambda item: _PLACE_CACHE[item][0])
+    _PLACE_CACHE.pop(oldest_key, None)
+
+
 def normalize_airport_code(value: str) -> str:
     cleaned = value.strip().upper()
+    paren_match = re.search(r"\(([A-Z]{3})\)", cleaned)
+    if paren_match:
+        return paren_match.group(1)
     match = re.search(r"\b([A-Z]{3})\b", cleaned)
     if match:
         return match.group(1)
@@ -278,3 +314,77 @@ def search_flight_offers(
             continue
 
     return results
+
+
+def _format_place_suggestion(place: dict[str, Any]) -> dict[str, Any] | None:
+    iata_code = (place.get("iata_code") or "").strip().upper()
+    if not iata_code:
+        return None
+
+    place_type = place.get("type") or "airport"
+    airport_name = (place.get("name") or iata_code).strip()
+    country = (place.get("iata_country_code") or "").strip()
+    city_name = (place.get("city_name") or (place.get("city") or {}).get("name") or "").strip()
+
+    if place_type == "city":
+        display_name = airport_name
+        subtitle = f"All airports · {country}" if country else "All airports"
+    else:
+        display_name = city_name or airport_name
+        subtitle_parts = [part for part in [airport_name, country] if part and part != display_name]
+        subtitle = ", ".join(subtitle_parts) if subtitle_parts else country
+
+    return {
+        "id": place.get("id") or iata_code,
+        "code": iata_code,
+        "name": display_name,
+        "subtitle": subtitle,
+        "type": place_type,
+    }
+
+
+def search_place_suggestions(query: str, limit: int = 8) -> list[dict[str, Any]]:
+    settings = _get_settings()
+    if not settings["access_token"]:
+        raise DuffelConfigError(
+            "Duffel access token is missing. Set DUFFEL_ACCESS_TOKEN in your .env file."
+        )
+
+    trimmed = query.strip()
+    if len(trimmed) < 2:
+        return []
+
+    cached = _read_place_cache(trimmed)
+    if cached is not None:
+        return cached[:limit]
+
+    client = _get_http_client()
+    response = client.get(
+        f"{DUFFEL_API_URL}/places/suggestions",
+        params={"query": trimmed},
+        headers=_duffel_headers(settings),
+    )
+
+    if response.status_code != 200:
+        _raise_for_duffel_error(response, "Duffel place search failed.")
+
+    places = response.json().get("data") or []
+
+    seen_codes: set[str] = set()
+    results: list[dict[str, Any]] = []
+
+    def add_place(place: dict[str, Any]) -> None:
+        suggestion = _format_place_suggestion(place)
+        if not suggestion or suggestion["code"] in seen_codes:
+            return
+        seen_codes.add(suggestion["code"])
+        results.append(suggestion)
+
+    for place in places:
+        add_place(place)
+        if place.get("type") == "city":
+            for airport in place.get("airports") or []:
+                add_place({**airport, "type": "airport"})
+
+    _write_place_cache(trimmed, results)
+    return results[:limit]

@@ -14,6 +14,7 @@ from duffel_client import (
     ENV_PATH,
     credentials_configured,
     search_flight_offers,
+    search_place_suggestions,
 )
 
 app = FastAPI(title="PointsFlight Finder API")
@@ -92,6 +93,17 @@ def search_flights(
             )
 
     return results
+
+
+@app.get("/api/places/suggestions")
+def place_suggestions(q: str = Query("", min_length=0)):
+    try:
+        return search_place_suggestions(q)
+    except DuffelConfigError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except DuffelAPIError as exc:
+        status = exc.status_code if exc.status_code and exc.status_code < 500 else 502
+        raise HTTPException(status_code=status, detail=str(exc)) from exc
 
 
 if __name__ == "__main__":

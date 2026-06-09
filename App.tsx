@@ -136,6 +136,242 @@ function FilterDropdown<T extends string | number>({
   );
 }
 
+interface PlaceSuggestion {
+  id: string;
+  code: string;
+  name: string;
+  subtitle: string;
+  type: 'airport' | 'city';
+}
+
+interface AirportAutocompleteProps {
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+  ariaLabel: string;
+}
+
+function formatPlaceLabel(suggestion: PlaceSuggestion): string {
+  return `${suggestion.name} (${suggestion.code})`;
+}
+
+function getCachedSuggestions(
+  query: string,
+  cache: Map<string, PlaceSuggestion[]>
+): PlaceSuggestion[] | null {
+  const normalized = query.toLowerCase();
+  const exact = cache.get(normalized);
+  if (exact) return exact;
+
+  for (let length = normalized.length - 1; length >= 2; length -= 1) {
+    const prefix = cache.get(normalized.slice(0, length));
+    if (prefix) return prefix;
+  }
+
+  return null;
+}
+
+function AirportAutocomplete({ value, onChange, placeholder, ariaLabel }: AirportAutocompleteProps) {
+  const [open, setOpen] = useState(false);
+  const [suggestions, setSuggestions] = useState<PlaceSuggestion[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [highlightIndex, setHighlightIndex] = useState(-1);
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const suppressFetchRef = useRef(false);
+  const cacheRef = useRef<Map<string, PlaceSuggestion[]>>(new Map());
+  const abortRef = useRef<AbortController | null>(null);
+  const requestIdRef = useRef(0);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const handlePointerDown = (event: MouseEvent) => {
+      if (rootRef.current && !rootRef.current.contains(event.target as Node)) {
+        setOpen(false);
+        setHighlightIndex(-1);
+      }
+    };
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setOpen(false);
+        setHighlightIndex(-1);
+        inputRef.current?.blur();
+      }
+    };
+
+    document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('keydown', handleEscape);
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [open]);
+
+  useEffect(() => {
+    const query = value.trim();
+    if (suppressFetchRef.current) {
+      suppressFetchRef.current = false;
+      return;
+    }
+
+    if (query.length < 2) {
+      abortRef.current?.abort();
+      setSuggestions([]);
+      setOpen(false);
+      setLoading(false);
+      return;
+    }
+
+    const normalizedQuery = query.toLowerCase();
+    const cached = getCachedSuggestions(normalizedQuery, cacheRef.current);
+    if (cached) {
+      setSuggestions(cached);
+      setOpen(cached.length > 0);
+      setHighlightIndex(-1);
+    }
+
+    const timer = window.setTimeout(async () => {
+      abortRef.current?.abort();
+      const controller = new AbortController();
+      abortRef.current = controller;
+      const requestId = ++requestIdRef.current;
+
+      if (!cached) {
+        setLoading(true);
+      }
+
+      try {
+        const response = await fetch(
+          `http://localhost:8000/api/places/suggestions?q=${encodeURIComponent(query)}`,
+          { signal: controller.signal }
+        );
+        const data = await response.json();
+        if (requestId !== requestIdRef.current) return;
+        if (!response.ok) {
+          if (!cached) {
+            setSuggestions([]);
+            setOpen(false);
+          }
+          return;
+        }
+        const nextSuggestions = Array.isArray(data) ? data : [];
+        cacheRef.current.set(normalizedQuery, nextSuggestions);
+        setSuggestions(nextSuggestions);
+        setOpen(nextSuggestions.length > 0);
+        setHighlightIndex(-1);
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') {
+          return;
+        }
+        if (!cached) {
+          setSuggestions([]);
+          setOpen(false);
+        }
+      } finally {
+        if (requestId === requestIdRef.current) {
+          setLoading(false);
+        }
+      }
+    }, 120);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [value]);
+
+  const selectSuggestion = (suggestion: PlaceSuggestion) => {
+    suppressFetchRef.current = true;
+    onChange(formatPlaceLabel(suggestion));
+    setOpen(false);
+    setSuggestions([]);
+    setHighlightIndex(-1);
+  };
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!open || suggestions.length === 0) return;
+
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      setHighlightIndex((prev) => (prev + 1) % suggestions.length);
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      setHighlightIndex((prev) => (prev <= 0 ? suggestions.length - 1 : prev - 1));
+    } else if (event.key === 'Enter' && highlightIndex >= 0) {
+      event.preventDefault();
+      selectSuggestion(suggestions[highlightIndex]);
+    }
+  };
+
+  return (
+    <div ref={rootRef} style={styles.airportAutocomplete}>
+      <input
+        ref={inputRef}
+        type="text"
+        placeholder={placeholder}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onFocus={() => {
+          if (suggestions.length > 0) setOpen(true);
+        }}
+        onKeyDown={handleKeyDown}
+        style={styles.routeInput}
+        aria-label={ariaLabel}
+        aria-autocomplete="list"
+        aria-expanded={open}
+        aria-controls={open ? `${ariaLabel}-suggestions` : undefined}
+        role="combobox"
+        autoComplete="off"
+      />
+      {open && (
+        <ul
+          id={`${ariaLabel}-suggestions`}
+          style={styles.suggestionMenu}
+          role="listbox"
+          aria-label={`${ariaLabel} suggestions`}
+        >
+          {loading && suggestions.length === 0 ? (
+            <li style={styles.suggestionStatus} role="presentation">Searching...</li>
+          ) : (
+            suggestions.map((suggestion, index) => {
+              const highlighted = highlightIndex === index || hoveredIndex === index;
+              return (
+                <li key={suggestion.id} role="none">
+                  <button
+                    type="button"
+                    role="option"
+                    aria-selected={highlightIndex === index}
+                    style={{
+                      ...styles.suggestionOption,
+                      ...(highlighted ? styles.suggestionOptionHover : {}),
+                    }}
+                    onMouseEnter={() => {
+                      setHoveredIndex(index);
+                      setHighlightIndex(index);
+                    }}
+                    onMouseLeave={() => setHoveredIndex(null)}
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => selectSuggestion(suggestion)}
+                  >
+                    <span style={styles.suggestionText}>
+                      <span style={styles.suggestionName}>{formatPlaceLabel(suggestion)}</span>
+                      {suggestion.subtitle && (
+                        <span style={styles.suggestionSubtitle}>{suggestion.subtitle}</span>
+                      )}
+                    </span>
+                  </button>
+                </li>
+              );
+            })
+          )}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 interface PassengerDropdownProps {
   adults: number;
   childCount: number;
@@ -561,13 +797,11 @@ export default function App() {
             <div style={styles.routeBlock}>
               <div style={styles.routeField}>
                 <span style={styles.fieldIcon}><DepartIcon /></span>
-                <input
-                  type="text"
-                  placeholder="From (e.g. JFK)"
+                <AirportAutocomplete
                   value={origin}
-                  onChange={(e) => setOrigin(e.target.value)}
-                  style={styles.routeInput}
-                  aria-label="Origin"
+                  onChange={setOrigin}
+                  placeholder="From (city or airport)"
+                  ariaLabel="Origin"
                 />
               </div>
 
@@ -583,13 +817,11 @@ export default function App() {
 
               <div style={styles.routeField}>
                 <span style={styles.fieldIcon}><ArriveIcon /></span>
-                <input
-                  type="text"
-                  placeholder="To (e.g. LAX)"
+                <AirportAutocomplete
                   value={destination}
-                  onChange={(e) => setDestination(e.target.value)}
-                  style={styles.routeInput}
-                  aria-label="Destination"
+                  onChange={setDestination}
+                  placeholder="To (city or airport)"
+                  ariaLabel="Destination"
                 />
               </div>
             </div>
@@ -1032,12 +1264,79 @@ const styles: { [key: string]: React.CSSProperties } = {
     gap: '4px',
   },
   routeField: {
+    position: 'relative',
     display: 'flex',
     alignItems: 'center',
     flex: 1,
     minWidth: 0,
     gap: '8px',
     padding: '0 8px',
+  },
+  airportAutocomplete: {
+    position: 'relative',
+    flex: 1,
+    minWidth: 0,
+  },
+  suggestionMenu: {
+    position: 'absolute',
+    top: 'calc(100% + 6px)',
+    left: '-8px',
+    right: '-8px',
+    margin: 0,
+    padding: '6px 0',
+    listStyle: 'none',
+    background: '#fff',
+    border: '1px solid #e0e0e0',
+    borderRadius: '10px',
+    boxShadow: '0 8px 24px rgba(60, 64, 67, 0.18)',
+    zIndex: 30,
+    maxHeight: '320px',
+    overflowY: 'auto',
+  },
+  suggestionOption: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: '16px',
+    width: '100%',
+    border: 'none',
+    background: 'transparent',
+    padding: '10px 14px',
+    cursor: 'pointer',
+    textAlign: 'left',
+    fontFamily: 'inherit',
+  },
+  suggestionOptionHover: {
+    background: '#f3f4ff',
+  },
+  suggestionText: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '2px',
+    minWidth: 0,
+  },
+  suggestionName: {
+    fontSize: '15px',
+    fontWeight: 500,
+    color: '#3c4043',
+  },
+  suggestionSubtitle: {
+    fontSize: '13px',
+    color: '#80868b',
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+  },
+  suggestionCode: {
+    fontSize: '14px',
+    fontWeight: 600,
+    color: '#6366f1',
+    flexShrink: 0,
+  },
+  suggestionStatus: {
+    padding: '10px 14px',
+    fontSize: '14px',
+    color: '#80868b',
   },
   fieldIcon: {
     display: 'flex',
