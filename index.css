@@ -98,3 +98,18 @@ textarea {
   outline: none !important;
   box-shadow: none !important;
 }
+
+.places-search-loader__orbit {
+  transform-box: view-box;
+  transform-origin: 28px 28px;
+  animation: places-loader-orbit 1.55s linear infinite;
+}
+
+@keyframes places-loader-orbit {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

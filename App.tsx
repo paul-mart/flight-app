@@ -155,6 +155,42 @@ function formatPlaceLabel(suggestion: PlaceSuggestion): string {
   return `${suggestion.name} (${suggestion.code})`;
 }
 
+function PlacesSearchLoader({ size = 32 }: { size?: number }) {
+  return (
+    <svg
+      className="places-search-loader"
+      width={size}
+      height={size}
+      viewBox="0 0 56 56"
+      overflow="visible"
+      aria-hidden
+    >
+      <circle
+        cx="28"
+        cy="28"
+        r="15"
+        fill="none"
+        stroke="#c7d2fe"
+        strokeWidth="2"
+        strokeDasharray="2.5 4.5"
+        strokeLinecap="round"
+      />
+      <g className="places-search-loader__orbit">
+        <g transform="translate(28, 28)">
+          <g transform="translate(0, -15) rotate(90)">
+            <g transform="translate(-12, -12) scale(0.54)">
+              <path
+                d="M21 16v-2l-8-5V3.5a1.5 1.5 0 00-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"
+                fill="#6366f1"
+              />
+            </g>
+          </g>
+        </g>
+      </g>
+    </svg>
+  );
+}
+
 function getCachedSuggestions(
   query: string,
   cache: Map<string, PlaceSuggestion[]>
@@ -241,6 +277,7 @@ function AirportAutocomplete({ value, onChange, placeholder, ariaLabel }: Airpor
 
       if (!cached) {
         setLoading(true);
+        setOpen(true);
       }
 
       try {
@@ -314,18 +351,27 @@ function AirportAutocomplete({ value, onChange, placeholder, ariaLabel }: Airpor
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onFocus={() => {
-          if (suggestions.length > 0) setOpen(true);
+          if (suggestions.length > 0 || loading) setOpen(true);
         }}
         onKeyDown={handleKeyDown}
-        style={styles.routeInput}
+        style={{
+          ...styles.routeInput,
+          ...(loading ? styles.routeInputLoading : {}),
+        }}
         aria-label={ariaLabel}
         aria-autocomplete="list"
         aria-expanded={open}
+        aria-busy={loading}
         aria-controls={open ? `${ariaLabel}-suggestions` : undefined}
         role="combobox"
         autoComplete="off"
       />
-      {open && (
+      {loading && (
+        <div style={styles.suggestionInputLoader} aria-hidden>
+          <PlacesSearchLoader size={26} />
+        </div>
+      )}
+      {(open || loading) && (
         <ul
           id={`${ariaLabel}-suggestions`}
           style={styles.suggestionMenu}
@@ -333,7 +379,10 @@ function AirportAutocomplete({ value, onChange, placeholder, ariaLabel }: Airpor
           aria-label={`${ariaLabel} suggestions`}
         >
           {loading && suggestions.length === 0 ? (
-            <li style={styles.suggestionStatus} role="presentation">Searching...</li>
+            <li style={styles.suggestionLoaderRow} role="presentation">
+              <PlacesSearchLoader size={40} />
+              <span style={styles.suggestionLoaderText}>Searching places...</span>
+            </li>
           ) : (
             suggestions.map((suggestion, index) => {
               const highlighted = highlightIndex === index || hoveredIndex === index;
@@ -965,7 +1014,12 @@ export default function App() {
               </div>
             </div>
           ))
-        ) : loading ? null : hasSearched && flights.length === 0 ? (
+        ) : loading ? (
+          <div style={styles.flightSearchLoader} role="status" aria-live="polite">
+            <PlacesSearchLoader size={112} />
+            <span style={styles.flightSearchLoaderText}>Searching flights...</span>
+          </div>
+        ) : hasSearched && flights.length === 0 ? (
           <div style={styles.emptyState}>No flights were found for your search. Try different dates or airports.</div>
         ) : hasSearched && flights.length > 0 ? (
           <div style={styles.emptyState}>No flights match your advanced filters. Try allowing more stops.</div>
@@ -1333,6 +1387,28 @@ const styles: { [key: string]: React.CSSProperties } = {
     color: '#6366f1',
     flexShrink: 0,
   },
+  suggestionInputLoader: {
+    position: 'absolute',
+    right: '4px',
+    top: '50%',
+    transform: 'translateY(-50%)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    pointerEvents: 'none',
+  },
+  suggestionLoaderRow: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '10px',
+    padding: '18px 14px',
+  },
+  suggestionLoaderText: {
+    fontSize: '14px',
+    color: '#80868b',
+  },
   suggestionStatus: {
     padding: '10px 14px',
     fontSize: '14px',
@@ -1353,6 +1429,9 @@ const styles: { [key: string]: React.CSSProperties } = {
     padding: '12px 0',
     outline: 'none',
     height: '48px',
+  },
+  routeInputLoading: {
+    paddingRight: '34px',
   },
   swapBtn: {
     display: 'flex',
@@ -1424,6 +1503,20 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontSize: '14px',
     color: '#666',
     fontWeight: 500,
+  },
+  flightSearchLoader: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '16px',
+    padding: '56px 24px',
+    textAlign: 'center',
+  },
+  flightSearchLoaderText: {
+    fontSize: '16px',
+    fontWeight: 500,
+    color: '#5f6368',
   },
   flightCard: {
     display: 'flex',

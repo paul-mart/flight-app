@@ -79,9 +79,12 @@ def _write_place_cache(query: str, results: list[dict[str, Any]]) -> None:
 
 def normalize_airport_code(value: str) -> str:
     cleaned = value.strip().upper()
-    paren_match = re.search(r"\(([A-Z]{3})\)", cleaned)
-    if paren_match:
-        return paren_match.group(1)
+    trailing_code = re.search(r"\(([A-Z]{3})\)\s*$", cleaned)
+    if trailing_code:
+        return trailing_code.group(1)
+    paren_codes = re.findall(r"\(([A-Z]{3})\)", cleaned)
+    if paren_codes:
+        return paren_codes[-1]
     match = re.search(r"\b([A-Z]{3})\b", cleaned)
     if match:
         return match.group(1)
