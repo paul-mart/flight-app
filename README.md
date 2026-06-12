@@ -183,6 +183,7 @@ GET /api/search?origin=Boston+(BOS)&destination=New+York+(JFK)&departure_date=20
 [
   {
     "id": "...",
+    "departure_token": "...",
     "origin": "BOS",
     "destination": "JFK",
     "departure_date": "2026-06-24",
@@ -193,16 +194,32 @@ GET /api/search?origin=Boston+(BOS)&destination=New+York+(JFK)&departure_date=20
     "duration": "1h 15m",
     "duration_minutes": 75,
     "stops": 0,
-    "cash_price": 189.0,
-    "return_departure_time": "5:00 PM",
-    "return_arrival_time": "6:20 PM",
-    "return_flight_number": "B6 618",
-    "return_stops": 0
+    "cash_price": 189.0
   }
 ]
 ```
 
+For round-trip searches, return-leg fields are loaded separately via `POST /api/search/return-legs` (see below).
+
 When `search_type=points`, each result also includes `award_details` with estimated points, taxes/fees, and transfer partners (heuristic only — not live award availability).
+
+### `POST /api/search/return-legs`
+
+Loads return flight details for round-trip results (called in the background by the UI).
+
+**Body:**
+
+```json
+{
+  "origin": "Boston (BOS)",
+  "destination": "New York (JFK)",
+  "departure_date": "2026-06-24",
+  "return_date": "2026-06-26",
+  "departure_tokens": ["token1", "token2"]
+}
+```
+
+**Response** — map of `departure_token` → return leg fields (`return_departure_time`, `return_arrival_time`, `return_flight_number`, `return_carrier`, `return_stops`).
 
 ### HTTP status codes
 
@@ -225,12 +242,15 @@ A single SerpAPI `google_flights` request with `type=2`.
 
 ### Round-trip
 
-1. **Outbound search** — SerpAPI request with `type=1`, `outbound_date`, and `return_date`.
-2. **Return leg details** — For up to 15 outbound options, follow-up requests use each option's `departure_token` (with route parameters) to fetch return flight times and numbers. These run **in parallel** (up to 6 at a time) instead of one-by-one.
+Round-trip search is **two-phase** so the initial response stays in the ~2–5 second range:
+
+1. **Outbound search** (`GET /api/search`) — One SerpAPI request with `type=1`. Returns outbound flights and round-trip prices immediately.
+2. **Return leg details** (`POST /api/search/return-legs`) — The frontend loads return times and flight numbers in the background for up to 15 unique `departure_token` values (fetched in parallel on the server). Cards show “Loading return flight…” until this completes.
+
 3. **Deduping** — Identical itineraries are merged, keeping the lowest price.
 4. **Sorting** — Results are sorted by `cash_price` ascending.
 
-This matches [SerpAPI's round-trip flow](https://serpapi.com/google-flights-api): the first response returns outbound options with round-trip prices; return segments require a second call per selected outbound.
+This matches [SerpAPI's round-trip flow](https://serpapi.com/google-flights-api): the first response returns outbound options with round-trip prices; return segments require a follow-up call per outbound option.
 
 ## How airport autocomplete works
 

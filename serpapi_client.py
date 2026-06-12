@@ -356,8 +356,11 @@ def _parse_flight_option(
     if price is None:
         return None
 
+    departure_token = option.get("departure_token")
+
     result: dict[str, Any] = {
-        "id": option.get("departure_token") or option.get("booking_token") or "",
+        "id": departure_token or option.get("booking_token") or "",
+        "departure_token": departure_token,
         "origin": outbound["origin"],
         "destination": outbound["destination"],
         "departure_date": departure_date,
@@ -373,7 +376,6 @@ def _parse_flight_option(
         "cash_price": round(float(price), 2),
     }
 
-    departure_token = option.get("departure_token")
     if return_cache and departure_token:
         inbound = return_cache.get(departure_token)
         if inbound:
@@ -412,6 +414,56 @@ def _dedupe_flights(flights: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return list(best_by_key.values())
 
 
+def _return_leg_fields(inbound: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "return_departure_time": inbound["departure_time"],
+        "return_arrival_time": inbound["arrival_time"],
+        "return_flight_number": inbound["flight_number"],
+        "return_carrier": inbound["carrier"],
+        "return_stops": inbound["stops"],
+        "return_duration_minutes": inbound["duration_minutes"],
+    }
+
+
+def fetch_return_legs(
+    origin: str,
+    destination: str,
+    departure_date: str,
+    return_date: str,
+    departure_tokens: list[str],
+    max_tokens: int = _RETURN_DETAIL_LIMIT,
+) -> dict[str, dict[str, Any]]:
+    origin_code = normalize_airport_code(origin)
+    destination_code = normalize_airport_code(destination)
+
+    tokens_to_fetch: list[str] = []
+    seen_tokens: set[str] = set()
+    for token in departure_tokens:
+        cleaned = (token or "").strip()
+        if not cleaned or cleaned in seen_tokens:
+            continue
+        seen_tokens.add(cleaned)
+        tokens_to_fetch.append(cleaned)
+        if len(tokens_to_fetch) >= max_tokens:
+            break
+
+    if not tokens_to_fetch:
+        return {}
+
+    cache = _fetch_return_legs_parallel(
+        tokens_to_fetch,
+        origin_code,
+        destination_code,
+        departure_date,
+        return_date,
+    )
+    return {
+        token: _return_leg_fields(inbound)
+        for token, inbound in cache.items()
+        if inbound
+    }
+
+
 def search_flight_offers(
     origin: str,
     destination: str,
@@ -441,26 +493,6 @@ def search_flight_offers(
     payload = _serpapi_search(params)
     options = _collect_flight_options(payload)
 
-    return_cache: dict[str, dict[str, Any] | None] = {}
-    if return_date:
-        tokens_to_fetch: list[str] = []
-        seen_tokens: set[str] = set()
-        for option in options:
-            token = option.get("departure_token")
-            if not token or token in seen_tokens:
-                continue
-            seen_tokens.add(token)
-            tokens_to_fetch.append(token)
-            if len(tokens_to_fetch) >= _RETURN_DETAIL_LIMIT:
-                break
-        return_cache = _fetch_return_legs_parallel(
-            tokens_to_fetch,
-            origin_code,
-            destination_code,
-            departure_date,
-            return_date,
-        )
-
     parsed: list[dict[str, Any]] = []
     for option in options:
         try:
@@ -469,7 +501,6 @@ def search_flight_offers(
                 origin_code,
                 destination_code,
                 departure_date,
-                return_cache,
             )
             if flight:
                 parsed.append(flight)

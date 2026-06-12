@@ -649,8 +649,18 @@ function CarrierBadge({ carrier, logos }: { carrier: string; logos?: string[] })
   );
 }
 
+interface ReturnLegFields {
+  return_departure_time: string;
+  return_arrival_time: string;
+  return_flight_number: string;
+  return_carrier: string;
+  return_stops: number;
+  return_duration_minutes?: number;
+}
+
 interface Flight {
   id: number | string;
+  departure_token?: string;
   origin: string;
   destination: string;
   departure_date: string;
@@ -669,6 +679,18 @@ interface Flight {
   return_carrier?: string;
   return_stops?: number;
   award_details?: AwardDetails;
+}
+
+function applyReturnLeg(flight: Flight, leg: ReturnLegFields): Flight {
+  return {
+    ...flight,
+    return_departure_time: leg.return_departure_time,
+    return_arrival_time: leg.return_arrival_time,
+    return_flight_number: leg.return_flight_number,
+    return_carrier: leg.return_carrier,
+    return_stops: leg.return_stops,
+    duration_minutes: (flight.duration_minutes ?? 0) + (leg.return_duration_minutes ?? 0),
+  };
 }
 
 type StopsFilter = 'nonstop' | '1-or-fewer' | '2-or-fewer';
@@ -734,6 +756,8 @@ export default function App() {
   const [advancedEnabled, setAdvancedEnabled] = useState(false);
   const [validationWarning, setValidationWarning] = useState<string | null>(null);
   const [modalTitle, setModalTitle] = useState('Missing information');
+  const [loadingReturnDetails, setLoadingReturnDetails] = useState(false);
+  const searchSeqRef = useRef(0);
 
   const showDialog = (title: string, message: string) => {
     setModalTitle(title);
@@ -772,7 +796,9 @@ export default function App() {
       return;
     }
 
+    const searchSeq = ++searchSeqRef.current;
     setLoading(true);
+    setLoadingReturnDetails(false);
     setFlights([]);
     try {
       const params = new URLSearchParams({
@@ -800,12 +826,54 @@ export default function App() {
         showDialog('Search error', detail);
         return;
       }
-      setFlights(data);
-      if (Array.isArray(data) && data.length === 0) {
+      const results: Flight[] = Array.isArray(data) ? data : [];
+      setFlights(results);
+      if (results.length === 0) {
         showDialog(
           'No flights found',
           'No flights were found for your search. Try different dates or airports.'
         );
+      } else if (tripType === 'round-trip') {
+        const tokens = [...new Set(
+          results.map((flight) => flight.departure_token).filter((token): token is string => Boolean(token))
+        )].slice(0, 15);
+        if (tokens.length > 0) {
+          setLoadingReturnDetails(true);
+          void (async () => {
+            try {
+              const returnResponse = await fetch('http://localhost:8000/api/search/return-legs', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  origin: trimmedOrigin,
+                  destination: trimmedDestination,
+                  departure_date: date,
+                  return_date: returnDate,
+                  departure_tokens: tokens,
+                }),
+              });
+              const returnData = await returnResponse.json();
+              if (!returnResponse.ok || searchSeq !== searchSeqRef.current) {
+                return;
+              }
+              setFlights((prev) =>
+                prev.map((flight) => {
+                  const token = flight.departure_token;
+                  if (!token || !returnData[token]) {
+                    return flight;
+                  }
+                  return applyReturnLeg(flight, returnData[token] as ReturnLegFields);
+                })
+              );
+            } catch (returnError) {
+              console.error('Error loading return legs:', returnError);
+            } finally {
+              if (searchSeq === searchSeqRef.current) {
+                setLoadingReturnDetails(false);
+              }
+            }
+          })();
+        }
       }
     } catch (error) {
       console.error("Error fetching flights:", error);
@@ -1026,17 +1094,23 @@ export default function App() {
                   <span style={styles.subtext}>
                     {flight.carrier} {flight.flight_number} • {flight.duration} • {flight.stops === 0 ? 'Nonstop' : `${flight.stops} stop${flight.stops > 1 ? 's' : ''}`}
                   </span>
-                  {tripType === 'round-trip' && flight.return_flight_number && (
+                  {tripType === 'round-trip' && (
                     <>
                       <strong style={styles.returnLabel}>{flight.destination} → {flight.origin}</strong>
-                      {flight.return_departure_time && flight.return_arrival_time && (
-                        <span style={styles.timeText}>
-                          {flight.return_departure_time} – {flight.return_arrival_time}
-                        </span>
-                      )}
-                      <span style={styles.subtext}>
-                        {(flight.return_carrier ?? flight.carrier)} {flight.return_flight_number} • {(flight.return_stops ?? 0) === 0 ? 'Nonstop' : `${flight.return_stops} stop${(flight.return_stops ?? 0) > 1 ? 's' : ''}`}
-                      </span>
+                      {flight.return_flight_number ? (
+                        <>
+                          {flight.return_departure_time && flight.return_arrival_time && (
+                            <span style={styles.timeText}>
+                              {flight.return_departure_time} – {flight.return_arrival_time}
+                            </span>
+                          )}
+                          <span style={styles.subtext}>
+                            {(flight.return_carrier ?? flight.carrier)} {flight.return_flight_number} • {(flight.return_stops ?? 0) === 0 ? 'Nonstop' : `${flight.return_stops} stop${(flight.return_stops ?? 0) > 1 ? 's' : ''}`}
+                          </span>
+                        </>
+                      ) : loadingReturnDetails && flight.departure_token ? (
+                        <span style={styles.returnLoading}>Loading return flight…</span>
+                      ) : null}
                     </>
                   )}
                 </div>
@@ -1596,6 +1670,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   carrierLogoOverflow: { fontSize: '12px', color: '#666', fontWeight: 500 },
   routeDetails: { display: 'flex', flexDirection: 'column', gap: '4px' },
   returnLabel: { fontSize: '14px', marginTop: '8px' },
+  returnLoading: { fontSize: '13px', color: '#6b7280', fontStyle: 'italic' },
   timeText: { fontSize: '15px', fontWeight: 500, color: '#1f2937' },
   subtext: { fontSize: '13px', color: '#666' },
   pricingSection: { display: 'flex', alignItems: 'center' },

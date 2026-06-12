@@ -7,6 +7,7 @@ load_dotenv(Path(__file__).resolve().parent / ".env")
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, Field
 
 from airport_places import data_available as airport_data_available
 from airport_places import search_place_suggestions as airport_place_suggestions
@@ -15,9 +16,18 @@ from serpapi_client import (
     SerpAPIConfigError,
     SerpAPIError,
     credentials_configured as serpapi_configured,
+    fetch_return_legs,
     search_flight_offers,
     search_place_suggestions as serpapi_place_suggestions,
 )
+
+
+class ReturnLegsRequest(BaseModel):
+    origin: str
+    destination: str
+    departure_date: str
+    return_date: str
+    departure_tokens: list[str] = Field(..., max_length=15)
 
 app = FastAPI(title="PointsFlight Finder API")
 
@@ -97,6 +107,25 @@ def search_flights(
             )
 
     return results
+
+
+@app.post("/api/search/return-legs")
+def search_return_legs(body: ReturnLegsRequest):
+    try:
+        return fetch_return_legs(
+            origin=body.origin,
+            destination=body.destination,
+            departure_date=body.departure_date,
+            return_date=body.return_date,
+            departure_tokens=body.departure_tokens,
+        )
+    except SerpAPIConfigError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except SerpAPIError as exc:
+        status = exc.status_code if exc.status_code and exc.status_code < 500 else 502
+        raise HTTPException(status_code=status, detail=str(exc)) from exc
 
 
 @app.get("/api/places/suggestions")
