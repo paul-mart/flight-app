@@ -694,7 +694,13 @@ function applyReturnLeg(flight: Flight, leg: ReturnLegFields): Flight {
 }
 
 type StopsFilter = 'nonstop' | '1-or-fewer' | '2-or-fewer';
-type SortOption = 'price-asc' | 'price-desc' | 'duration-asc' | 'duration-desc';
+type SortOption =
+  | 'price-asc'
+  | 'price-desc'
+  | 'duration-asc'
+  | 'duration-desc'
+  | 'departure-asc'
+  | 'departure-desc';
 
 function matchesStopsFilter(stops: number, filter: StopsFilter): boolean {
   if (filter === 'nonstop') return stops === 0;
@@ -716,6 +722,26 @@ function getDurationMinutes(flight: Flight): number {
   return parseInt(match[1] || '0', 10) * 60 + parseInt(match[2] || '0', 10);
 }
 
+function getDepartureMinutes(flight: Flight): number | null {
+  const time = flight.departure_time?.trim();
+  if (!time) return null;
+
+  const match = time.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  if (!match) return null;
+
+  let hours = parseInt(match[1], 10);
+  const minutes = parseInt(match[2], 10);
+  const period = match[3].toUpperCase();
+
+  if (period === 'AM') {
+    if (hours === 12) hours = 0;
+  } else if (hours !== 12) {
+    hours += 12;
+  }
+
+  return hours * 60 + minutes;
+}
+
 function sortFlights(flights: Flight[], sortOption: SortOption, searchType: 'cash' | 'points'): Flight[] {
   const sorted = [...flights];
   sorted.sort((a, b) => {
@@ -728,7 +754,18 @@ function sortFlights(flights: Flight[], sortOption: SortOption, searchType: 'cas
     if (sortOption === 'duration-asc') {
       return getDurationMinutes(a) - getDurationMinutes(b);
     }
-    return getDurationMinutes(b) - getDurationMinutes(a);
+    if (sortOption === 'duration-desc') {
+      return getDurationMinutes(b) - getDurationMinutes(a);
+    }
+    if (sortOption === 'departure-asc' || sortOption === 'departure-desc') {
+      const aMinutes = getDepartureMinutes(a);
+      const bMinutes = getDepartureMinutes(b);
+      if (aMinutes == null && bMinutes == null) return 0;
+      if (aMinutes == null) return 1;
+      if (bMinutes == null) return -1;
+      return sortOption === 'departure-asc' ? aMinutes - bMinutes : bMinutes - aMinutes;
+    }
+    return 0;
   });
   return sorted;
 }
@@ -1060,6 +1097,8 @@ export default function App() {
                   options={[
                     { value: 'price-asc', label: 'Price: low to high' },
                     { value: 'price-desc', label: 'Price: high to low' },
+                    { value: 'departure-asc', label: 'Departure: earliest first' },
+                    { value: 'departure-desc', label: 'Departure: latest first' },
                     { value: 'duration-asc', label: 'Duration: shortest first' },
                     { value: 'duration-desc', label: 'Duration: longest first' },
                   ]}
