@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { apiFetch, apiUrl } from './api';
 
 interface AwardDetails {
   points_required: number;
@@ -281,8 +282,8 @@ function AirportAutocomplete({ value, onChange, placeholder, ariaLabel }: Airpor
       }
 
       try {
-        const response = await fetch(
-          `http://localhost:8000/api/places/suggestions?q=${encodeURIComponent(query)}`,
+        const response = await apiFetch(
+          apiUrl(`/api/places/suggestions?q=${encodeURIComponent(query)}`),
           { signal: controller.signal }
         );
         const data = await response.json();
@@ -792,7 +793,7 @@ async function fetchReturnLegBatches(
     if (isCancelled()) return;
 
     const batch = tokens.slice(index, index + RETURN_LEG_BATCH_SIZE);
-    const response = await fetch('http://localhost:8000/api/search/return-legs', {
+    const response = await apiFetch(apiUrl('/api/search/return-legs'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -888,7 +889,7 @@ export default function App() {
       if (tripType === 'round-trip') {
         params.set('return_date', returnDate);
       }
-      const response = await fetch(`http://localhost:8000/api/search?${params}`);
+      const response = await apiFetch(apiUrl(`/api/search?${params}`));
       const data = await response.json();
       if (!response.ok) {
         const detail = typeof data.detail === 'string'

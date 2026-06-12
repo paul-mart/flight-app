@@ -9,13 +9,18 @@ from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
+from api_security import (
+    ApiSecurityMiddleware,
+    RateLimiter,
+    env_int,
+    get_allowed_origins,
+    get_app_api_key,
+)
 from airport_places import data_available as airport_data_available
 from airport_places import search_place_suggestions as airport_place_suggestions
 from serpapi_client import (
-    ENV_PATH,
     SerpAPIConfigError,
     SerpAPIError,
-    credentials_configured as serpapi_configured,
     fetch_return_legs,
     search_flight_offers,
     search_place_suggestions as serpapi_place_suggestions,
@@ -31,12 +36,24 @@ class ReturnLegsRequest(BaseModel):
 
 app = FastAPI(title="PointsFlight Finder API")
 
+_allowed_origins = get_allowed_origins()
+_rate_limiter = RateLimiter(
+    max_requests=env_int("RATE_LIMIT_REQUESTS", 60),
+    window_seconds=env_int("RATE_LIMIT_WINDOW_SECONDS", 60),
+)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_allowed_origins,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
+)
+app.add_middleware(
+    ApiSecurityMiddleware,
+    allowed_origins=_allowed_origins,
+    app_api_key=get_app_api_key(),
+    rate_limiter=_rate_limiter,
 )
 
 
@@ -60,13 +77,7 @@ def calculate_points_estimate(cash_price: float, airline: str) -> dict:
 
 @app.get("/api/health")
 def health():
-    return {
-        "status": "ok",
-        "serpapi_configured": serpapi_configured(),
-        "airport_data_available": airport_data_available(),
-        "places_provider": "local" if airport_data_available() else "serpapi",
-        "env_file_exists": ENV_PATH.exists(),
-    }
+    return {"status": "ok"}
 
 
 @app.get("/api/search")

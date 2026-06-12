@@ -114,24 +114,45 @@ Open **http://localhost:5173** in your browser.
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `SERPAPI_API_KEY` | Yes | — | SerpAPI key for flight search |
+| `SERPAPI_API_KEY` | Yes | — | SerpAPI key for flight search (**backend only**) |
 | `SERPAPI_CURRENCY` | No | `USD` | Currency for displayed prices |
 | `SERPAPI_GL` | No | `us` | Google country code (market) |
 | `SERPAPI_HL` | No | `en` | Language code |
+| `ALLOWED_ORIGINS` | No | `http://localhost:5173,...` | Comma-separated origins allowed to call the API |
+| `APP_API_KEY` | No | — | Optional shared secret sent as `X-App-Key` (see [Hosting & security](#hosting--security)) |
+| `RATE_LIMIT_REQUESTS` | No | `60` | Max API requests per IP per window |
+| `RATE_LIMIT_WINDOW_SECONDS` | No | `60` | Rate limit window in seconds |
+
+Frontend build (`.env.local` or CI secrets, not committed):
+
+| Variable | Description |
+|----------|-------------|
+| `VITE_API_BASE_URL` | Backend URL (e.g. `https://api.yoursite.com`) |
+| `VITE_APP_API_KEY` | Same as `APP_API_KEY` when the app key gate is enabled |
+
+## Hosting & security
+
+**GitHub Pages serves static files only.** Your SerpAPI key must stay on a separate backend (Railway, Render, Fly.io, a VPS, etc.). The frontend never receives `SERPAPI_API_KEY`.
+
+This project includes a small **backend safety net** (not bulletproof, but stops casual abuse):
+
+1. **CORS + origin allowlist** — Browser calls from other sites are blocked unless their origin is in `ALLOWED_ORIGINS` (add your Pages URL, e.g. `https://username.github.io`).
+2. **Per-IP rate limiting** — Defaults to 60 requests/minute per IP on `/api/*`.
+3. **Optional `APP_API_KEY`** — If set on the backend, requests must include `X-App-Key`. The matching `VITE_APP_API_KEY` is baked into the frontend at build time.
+
+**Important:** `APP_API_KEY` is visible to anyone who downloads your JavaScript bundle. It stops drive-by scripts and random sites from hitting your API, but a determined scraper can extract it. Real protection is: keep SerpAPI on the server, rate limit, monitor SerpAPI usage, and set SerpAPI account spending limits.
+
+**Do not** put `SERPAPI_API_KEY` in GitHub Actions variables that feed the Pages build — only use them for backend deployment.
 
 ## API reference
 
 ### `GET /api/health`
 
-Returns service status and configuration flags.
+Returns service status.
 
 ```json
 {
-  "status": "ok",
-  "serpapi_configured": true,
-  "airport_data_available": true,
-  "places_provider": "local",
-  "env_file_exists": true
+  "status": "ok"
 }
 ```
 
