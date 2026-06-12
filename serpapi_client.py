@@ -447,15 +447,6 @@ def _format_airport_suggestion(
 
 
 def search_place_suggestions(query: str, limit: int = 8) -> list[dict[str, Any]]:
-    from duffel_places import DuffelPlacesError, credentials_configured as duffel_places_configured
-    from duffel_places import search_place_suggestions as duffel_search_place_suggestions
-
-    if duffel_places_configured():
-        try:
-            return duffel_search_place_suggestions(query, limit)
-        except DuffelPlacesError:
-            pass
-
     trimmed = query.strip()
     if len(trimmed) < 2:
         return []

@@ -86,9 +86,7 @@ def search_flights(
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except SerpAPIError as exc:
-        status = 502 if exc.status_code in (400, 410, 429) else (
-            exc.status_code if exc.status_code and exc.status_code < 500 else 502
-        )
+        status = exc.status_code if exc.status_code and exc.status_code < 500 else 502
         raise HTTPException(status_code=status, detail=str(exc)) from exc
 
     if search_type == "points":
