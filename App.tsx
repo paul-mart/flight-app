@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { apiFetch, apiUrl } from './api';
+import DatePicker from './DatePicker';
 
 interface AwardDetails {
   points_required: number;
@@ -1053,29 +1054,26 @@ export default function App() {
 
             <div className="date-block" style={styles.dateBlock}>
               <span style={styles.fieldIcon}><CalendarIcon /></span>
-              <input
-                type="date"
+              <DatePicker
                 value={date}
-                onChange={(e) => {
-                  setDate(e.target.value);
-                  if (returnDate && e.target.value && returnDate < e.target.value) {
+                onChange={(nextDate) => {
+                  setDate(nextDate);
+                  if (returnDate && nextDate && returnDate < nextDate) {
                     setReturnDate('');
                   }
                 }}
-                style={styles.dateInput}
-                aria-label="Departure date"
+                placeholder="Departure"
+                ariaLabel="Departure date"
               />
               <span style={{ ...styles.dateArrow, ...(tripType === 'one-way' ? styles.dateHidden : {}) }}>→</span>
-              <input
-                type="date"
+              <DatePicker
                 value={returnDate}
-                min={date || undefined}
-                onChange={(e) => setReturnDate(e.target.value)}
-                style={{ ...styles.dateInput, ...(tripType === 'one-way' ? styles.dateHidden : {}) }}
+                onChange={setReturnDate}
+                placeholder="Return"
+                ariaLabel="Return date"
+                minDate={date || undefined}
                 disabled={tripType === 'one-way'}
-                tabIndex={tripType === 'one-way' ? -1 : 0}
-                aria-label="Return date"
-                aria-hidden={tripType === 'one-way'}
+                hidden={tripType === 'one-way'}
               />
             </div>
 
@@ -1662,17 +1660,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     borderRadius: '10px',
     padding: '6px 14px',
     gap: '10px',
-  },
-  dateInput: {
-    ...fieldFont,
-    border: 'none',
-    background: 'transparent',
-    padding: '12px 0',
-    outline: 'none',
-    height: '48px',
-    flex: 1,
-    minWidth: 0,
-    colorScheme: 'light',
+    position: 'relative',
   },
   dateArrow: {
     color: '#999',
