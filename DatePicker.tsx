@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { ChevronDownIcon } from './icons';
 
 const WEEKDAYS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'] as const;
 
@@ -87,6 +88,7 @@ export default function DatePicker({
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
+  const [triggerHovered, setTriggerHovered] = useState(false);
   const [hoveredDay, setHoveredDay] = useState<string | null>(null);
   const [viewMonth, setViewMonth] = useState(() => {
     const initial = parseIsoDate(value) ?? startOfDay(new Date());
@@ -216,12 +218,22 @@ export default function DatePicker({
           if (disabled || hidden) return;
           setOpen((prev) => !prev);
         }}
+        onMouseEnter={() => !disabled && setTriggerHovered(true)}
+        onMouseLeave={() => setTriggerHovered(false)}
         disabled={disabled}
         aria-label={ariaLabel}
         aria-expanded={open}
         aria-haspopup="dialog"
       >
         <span style={styles.triggerText}>{displayLabel}</span>
+        <span
+          style={{
+            ...styles.triggerChevron,
+            ...(open ? styles.triggerChevronOpen : triggerHovered ? styles.triggerChevronHover : {}),
+          }}
+        >
+          <ChevronDownIcon />
+        </span>
       </button>
 
       {open && !disabled && (
@@ -314,13 +326,17 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   trigger: {
     width: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: '8px',
     border: 'none',
     background: 'transparent',
     padding: '12px 0',
     height: '48px',
     cursor: 'pointer',
     textAlign: 'left',
-    fontFamily: "'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+    fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
     fontSize: '16px',
     fontWeight: 400,
     outline: 'none',
@@ -342,10 +358,24 @@ const styles: { [key: string]: React.CSSProperties } = {
     color: '#6366f1',
   },
   triggerText: {
+    flex: 1,
+    minWidth: 0,
     whiteSpace: 'nowrap',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
-    display: 'block',
+  },
+  triggerChevron: {
+    display: 'flex',
+    color: '#9ca3af',
+    flexShrink: 0,
+    transition: 'transform 0.15s ease, color 0.15s ease',
+  },
+  triggerChevronHover: {
+    color: '#b8bcc4',
+  },
+  triggerChevronOpen: {
+    transform: 'rotate(180deg)',
+    color: '#6366f1',
   },
   popover: {
     position: 'absolute',

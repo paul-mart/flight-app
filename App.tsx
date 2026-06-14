@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { apiFetch, apiUrl } from './api';
 import DatePicker from './DatePicker';
+import { ChevronDownIcon, PlaneArriveIcon, PlaneDepartIcon, CalendarIcon, SwapIcon, SearchIcon, ArrowRightIcon } from './icons';
 
 interface AwardDetails {
   points_required: number;
@@ -12,14 +13,6 @@ interface AwardDetails {
   is_direct?: boolean;
   return_points?: number;
   return_taxes_and_fees?: number;
-}
-
-function ChevronDownIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden>
-      <path d="M6 9l6 6 6-6" />
-    </svg>
-  );
 }
 
 interface FilterDropdownProps<T extends string | number> {
@@ -586,45 +579,8 @@ function PassengerDropdown({ adults, childCount, onChange }: PassengerDropdownPr
   );
 }
 
-function DepartIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-      <path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 00-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" />
-    </svg>
-  );
-}
-
-function ArriveIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-      <path d="M2 16v-2l8-5V3.5a1.5 1.5 0 013 0V9l8 5v2l-8-2.5V19l2 1.5V22l-3.5-1-3.5 1v-1.5L11 19v-5.5L2 16z" />
-    </svg>
-  );
-}
-
-function CalendarIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-      <path d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2zm0 16H5V10h14v10z" />
-    </svg>
-  );
-}
-
-function SearchIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden>
-      <circle cx="11" cy="11" r="7" />
-      <path d="M20 20l-3.5-3.5" />
-    </svg>
-  );
-}
-
-function SwapIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden>
-      <path d="M7 16V4M7 4L3 8M7 4l4 4M17 8v12M17 20l4-4M17 20l-4-4" />
-    </svg>
-  );
+function formatRouteLabel(origin: string, destination: string): string {
+  return `${origin} – ${destination}`;
 }
 
 function SearchModeTabs({
@@ -645,7 +601,7 @@ function SearchModeTabs({
         className={`search-mode-tab search-mode-tab-left${value === 'points' ? ' search-mode-tab-active' : ''}`}
         onClick={() => onChange('points')}
       >
-        Points
+        Redeem Points
       </button>
       <button
         type="button"
@@ -656,7 +612,7 @@ function SearchModeTabs({
         className={`search-mode-tab search-mode-tab-right${value === 'cash' ? ' search-mode-tab-active' : ''}`}
         onClick={() => onChange('cash')}
       >
-        Cash
+        Book with Cash
       </button>
     </div>
   );
@@ -1382,7 +1338,7 @@ export default function App() {
           <div className="main-bar" style={styles.mainBar}>
             <div className="route-block" style={styles.routeBlock}>
               <div style={styles.routeField} className="route-field">
-                <span style={styles.fieldIcon}><DepartIcon /></span>
+                <span className="form-field-icon" style={styles.fieldIcon}><PlaneDepartIcon /></span>
                 <AirportAutocomplete
                   value={origin}
                   onChange={setOrigin}
@@ -1403,7 +1359,7 @@ export default function App() {
               </button>
 
               <div style={styles.routeField} className="route-field">
-                <span style={styles.fieldIcon}><ArriveIcon /></span>
+                <span className="form-field-icon" style={styles.fieldIcon}><PlaneArriveIcon /></span>
                 <AirportAutocomplete
                   value={destination}
                   onChange={setDestination}
@@ -1414,7 +1370,7 @@ export default function App() {
             </div>
 
             <div className="date-block" style={styles.dateBlock}>
-              <span style={styles.fieldIcon}><CalendarIcon /></span>
+              <span className="form-field-icon" style={styles.fieldIcon}><CalendarIcon /></span>
               <DatePicker
                 value={date}
                 onChange={(nextDate) => {
@@ -1535,48 +1491,57 @@ export default function App() {
             <div key={flight.id} className="flight-card" style={styles.flightCard}>
               <div className="flight-card-body" style={styles.flightCardBody}>
                 <div className="flight-info" style={styles.flightInfo}>
-                  <CarrierBadge carrier={flight.carrier} logos={flight.carrier_logos} />
-                  <div className="route-details" style={styles.routeDetails}>
+                  <div className="flight-route-row" style={styles.flightRouteRow}>
+                    <CarrierBadge carrier={flight.carrier} logos={flight.carrier_logos} />
                     <strong className="flight-route-label" style={styles.routeLabel}>
-                      {flight.origin} → {flight.destination}
+                      {formatRouteLabel(flight.origin, flight.destination)}
                     </strong>
-                  {flight.departure_time && flight.arrival_time && (
-                    <span style={styles.timeText}>
-                      {flight.departure_time} – {flight.arrival_time}
+                  </div>
+                  <div className="flight-meta-block" style={styles.flightMetaBlock}>
+                    {flight.departure_time && flight.arrival_time && (
+                      <span style={styles.timeText}>
+                        {flight.departure_time} – {flight.arrival_time}
+                      </span>
+                    )}
+                    <span style={styles.subtext}>
+                      {flightDetailLine(flight.carrier, flight.flight_number, flight.duration, flight.stops)}
                     </span>
-                  )}
-                  <span style={styles.subtext}>
-                    {flightDetailLine(flight.carrier, flight.flight_number, flight.duration, flight.stops)}
-                  </span>
+                  </div>
                   {tripType === 'round-trip' && (
                     searchType === 'points' ? (
                       (flight.return_flight_number || flight.return_departure_time) ? (
                         <>
-                          <strong className="flight-route-label" style={styles.returnLabel}>
-                            {flight.destination} → {flight.origin}
-                          </strong>
-                          {flight.return_departure_time && flight.return_arrival_time && (
-                            <span style={styles.timeText}>
-                              {flight.return_departure_time} – {flight.return_arrival_time}
-                            </span>
-                          )}
-                          <span style={styles.subtext}>
-                            {flightDetailLine(
-                              flight.return_carrier ?? flight.carrier,
-                              flight.return_flight_number ?? '',
-                              flight.return_duration ?? '—',
-                              flight.return_stops ?? 0,
+                          <div className="flight-return-route-row" style={styles.flightReturnRouteRow}>
+                            <strong className="flight-route-label" style={styles.returnRouteLabel}>
+                              {formatRouteLabel(flight.destination, flight.origin)}
+                            </strong>
+                          </div>
+                          <div className="flight-meta-block" style={styles.flightMetaBlock}>
+                            {flight.return_departure_time && flight.return_arrival_time && (
+                              <span style={styles.timeText}>
+                                {flight.return_departure_time} – {flight.return_arrival_time}
+                              </span>
                             )}
-                          </span>
+                            <span style={styles.subtext}>
+                              {flightDetailLine(
+                                flight.return_carrier ?? flight.carrier,
+                                flight.return_flight_number ?? '',
+                                flight.return_duration ?? '—',
+                                flight.return_stops ?? 0,
+                              )}
+                            </span>
+                          </div>
                         </>
                       ) : null
                     ) : (
                     <>
-                      <strong className="flight-route-label" style={styles.returnLabel}>
-                        {flight.destination} → {flight.origin}
-                      </strong>
+                      <div className="flight-return-route-row" style={styles.flightReturnRouteRow}>
+                        <strong className="flight-route-label" style={styles.returnRouteLabel}>
+                          {formatRouteLabel(flight.destination, flight.origin)}
+                        </strong>
+                      </div>
                       {flight.return_flight_number ? (
-                        <>
+                        <div className="flight-meta-block" style={styles.flightMetaBlock}>
                           {flight.return_departure_time && flight.return_arrival_time && (
                             <span style={styles.timeText}>
                               {flight.return_departure_time} – {flight.return_arrival_time}
@@ -1590,7 +1555,7 @@ export default function App() {
                               flight.return_stops ?? 0,
                             )}
                           </span>
-                        </>
+                        </div>
                       ) : loadingReturnDetails && flight.departure_token ? (
                         <span style={styles.returnLoading}>Loading return flight…</span>
                       ) : flight.departure_token ? (
@@ -1600,7 +1565,6 @@ export default function App() {
                     )
                   )}
                 </div>
-              </div>
 
               <div className="flight-card-actions" style={styles.flightCardActions}>
                 <div className="pricing-section" style={styles.pricingSection}>
@@ -1640,6 +1604,7 @@ export default function App() {
                   onClick={() => setSelectedFlight(flight)}
                 >
                   View flight
+                  <ArrowRightIcon size={14} />
                 </button>
               </div>
               </div>
@@ -1708,32 +1673,34 @@ export default function App() {
   );
 }
 
+const FONT_FAMILY = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+
 const fieldFont: React.CSSProperties = {
-  fontFamily: "'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+  fontFamily: FONT_FAMILY,
   fontSize: '16px',
   fontWeight: 400,
-  color: '#3c4043',
-  letterSpacing: '0.01em',
+  color: '#111827',
+  letterSpacing: '-0.01em',
 };
 
 const styles: { [key: string]: React.CSSProperties } = {
   container: {
-    fontFamily: "'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+    fontFamily: FONT_FAMILY,
     maxWidth: '1100px',
     margin: '0 auto',
-    padding: '20px',
-    color: '#3c4043',
+    padding: '16px',
+    color: '#111827',
   },
-  header: { textAlign: 'center', marginBottom: '32px' },
+  header: { textAlign: 'center', marginBottom: '20px' },
   searchPanelWrap: {
     width: '100%',
   },
   searchPanel: {
     background: '#fff',
-    borderRadius: '0 0 14px 14px',
-    border: '1px solid #c7d2fe',
+    borderRadius: '0 0 12px 12px',
+    border: '1px solid #e5e7eb',
     borderTop: 'none',
-    boxShadow: '0 4px 20px rgba(99, 102, 241, 0.12), 0 1px 4px rgba(60, 64, 67, 0.06)',
+    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.04)',
   },
   advancedSection: {
     borderTop: '1px solid #f0f0f0',
@@ -2064,7 +2031,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   fieldIcon: {
     display: 'flex',
     alignItems: 'center',
-    color: '#888',
+    color: '#6b7280',
     flexShrink: 0,
   },
   routeInput: {
@@ -2120,13 +2087,11 @@ const styles: { [key: string]: React.CSSProperties } = {
     alignItems: 'center',
     justifyContent: 'center',
     gap: '10px',
-    background: 'linear-gradient(135deg, #7c3aed 0%, #3b82f6 100%)',
     color: '#fff',
     border: 'none',
     padding: '0 36px',
-    borderRadius: '10px',
     fontSize: '16px',
-    fontWeight: 500,
+    fontWeight: 600,
     cursor: 'pointer',
     minHeight: '56px',
     minWidth: '148px',
@@ -2134,11 +2099,11 @@ const styles: { [key: string]: React.CSSProperties } = {
     alignSelf: 'stretch',
     marginLeft: 'auto',
   },
-  resultsContainer: { marginTop: '30px' },
+  resultsContainer: { marginTop: '16px' },
   resultsCount: {
-    margin: '0 0 12px',
-    fontSize: '14px',
-    color: '#666',
+    margin: '0 0 10px',
+    fontSize: '13px',
+    color: '#6b7280',
     fontWeight: 500,
   },
   flightSearchLoader: {
@@ -2159,20 +2124,20 @@ const styles: { [key: string]: React.CSSProperties } = {
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: '20px',
-    background: 'rgba(255, 255, 255, 0.94)',
-    padding: '22px 24px',
-    borderRadius: '12px',
-    border: '1px solid rgba(199, 210, 254, 0.55)',
-    marginBottom: '12px',
-    boxShadow: '0 2px 16px rgba(99, 102, 241, 0.1)',
+    gap: '16px',
+    background: '#fff',
+    padding: '16px 20px',
+    borderRadius: '10px',
+    border: '1px solid #e5e7eb',
+    marginBottom: '10px',
+    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04)',
   },
   flightCardBody: {
     display: 'flex',
     flex: 1,
     justifyContent: 'space-between',
     alignItems: 'center',
-    gap: '24px',
+    gap: '16px',
     minWidth: 0,
     width: '100%',
   },
@@ -2181,22 +2146,21 @@ const styles: { [key: string]: React.CSSProperties } = {
     flexDirection: 'column',
     alignItems: 'flex-end',
     justifyContent: 'center',
-    gap: '10px',
+    gap: '8px',
     flexShrink: 0,
-    minWidth: '148px',
+    minWidth: '132px',
   },
   viewFlightBtn: {
-    ...fieldFont,
-    background: '#fff',
-    color: '#4338ca',
-    border: '1px solid #c7d2fe',
-    padding: '10px 18px',
-    borderRadius: '8px',
-    fontSize: '14px',
-    fontWeight: 600,
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '6px',
+    padding: '9px 16px',
+    minWidth: '124px',
+    border: 'none',
     cursor: 'pointer',
+    fontFamily: 'inherit',
     whiteSpace: 'nowrap',
-    transition: 'background 0.15s ease, border-color 0.15s ease',
   },
   flightDetailModal: {
     background: '#fff',
@@ -2319,40 +2283,51 @@ const styles: { [key: string]: React.CSSProperties } = {
     color: '#9ca3af',
     lineHeight: 1.45,
   },
-  flightInfo: { display: 'flex', gap: '24px', alignItems: 'center', flex: 1, minWidth: 0 },
+  flightInfo: { display: 'flex', flexDirection: 'column', gap: '2px', flex: 1, minWidth: 0 },
+  flightRouteRow: { display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 },
+  flightMetaBlock: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '1px',
+    paddingLeft: '52px',
+  },
+  flightReturnRouteRow: {
+    paddingLeft: '52px',
+    marginTop: '6px',
+  },
   carrierLogoGroup: {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: '10px',
+    gap: '6px',
     flexShrink: 0,
-    minWidth: '64px',
+    minWidth: '40px',
   },
   carrierBadge: {
-    background: '#eef2f7',
-    padding: '14px 16px',
-    borderRadius: '10px',
+    background: '#f3f4f6',
+    padding: '10px 12px',
+    borderRadius: '8px',
     fontWeight: 600,
-    fontSize: '13px',
+    fontSize: '12px',
     lineHeight: 1.2,
-    minHeight: '52px',
+    minHeight: '40px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     textAlign: 'center',
+    color: '#374151',
   },
-  carrierLogo: { height: '48px', width: 'auto', maxWidth: '96px', objectFit: 'contain', display: 'block' },
-  carrierLogoOverflow: { fontSize: '13px', color: '#666', fontWeight: 500 },
-  routeDetails: { display: 'flex', flexDirection: 'column', gap: '5px', minWidth: 0 },
-  routeLabel: { fontSize: '18px', fontWeight: 600, color: '#1f2937', lineHeight: 1.3 },
-  returnLabel: { fontSize: '16px', fontWeight: 600, marginTop: '10px', color: '#374151', lineHeight: 1.3 },
-  returnLoading: { fontSize: '14px', color: '#6b7280', fontStyle: 'italic' },
-  timeText: { fontSize: '16px', fontWeight: 500, color: '#1f2937' },
-  subtext: { fontSize: '14px', color: '#6b7280', lineHeight: 1.4 },
+  carrierLogo: { height: '40px', width: 'auto', maxWidth: '72px', objectFit: 'contain', display: 'block' },
+  carrierLogoOverflow: { fontSize: '12px', color: '#6b7280', fontWeight: 500 },
+  routeLabel: { fontSize: '16px', fontWeight: 600, color: '#111827', lineHeight: 1.25 },
+  returnRouteLabel: { fontSize: '15px', fontWeight: 600, color: '#111827', lineHeight: 1.25 },
+  returnLoading: { fontSize: '13px', color: '#6b7280', fontStyle: 'italic', paddingLeft: '52px' },
+  timeText: { fontSize: '14px', fontWeight: 500, color: '#374151', lineHeight: 1.35 },
+  subtext: { fontSize: '13px', color: '#6b7280', lineHeight: 1.35, fontWeight: 400 },
   pricingSection: { display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center' },
-  priceText: { fontSize: '26px', fontWeight: 600, color: '#2e7d32' },
-  priceHint: { fontSize: '12px', color: '#6b7280', marginBottom: '2px', textAlign: 'right' },
-  pointsText: { fontSize: '24px', fontWeight: 600, color: '#6366f1' },
+  priceText: { fontSize: '28px', fontWeight: 700, color: '#15803d', letterSpacing: '-0.02em' },
+  priceHint: { fontSize: '11px', color: '#6b7280', marginBottom: '2px', textAlign: 'right', fontWeight: 500 },
+  pointsText: { fontSize: '26px', fontWeight: 700, color: '#4338ca', letterSpacing: '-0.02em' },
   programTag: {
     fontSize: '12px',
     color: '#4338ca',
