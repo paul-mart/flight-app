@@ -601,7 +601,7 @@ function SearchModeTabs({
         className={`search-mode-tab search-mode-tab-left${value === 'points' ? ' search-mode-tab-active' : ''}`}
         onClick={() => onChange('points')}
       >
-        Redeem Points
+        Points Search
       </button>
       <button
         type="button"
@@ -612,7 +612,7 @@ function SearchModeTabs({
         className={`search-mode-tab search-mode-tab-right${value === 'cash' ? ' search-mode-tab-active' : ''}`}
         onClick={() => onChange('cash')}
       >
-        Book with Cash
+        Cash Search
       </button>
     </div>
   );
@@ -1118,7 +1118,7 @@ export default function App() {
   const [destination, setDestination] = useState('');
   const [date, setDate] = useState('');
   const [returnDate, setReturnDate] = useState('');
-  const [searchType, setSearchType] = useState<'cash' | 'points'>('cash');
+  const [searchType, setSearchType] = useState<'cash' | 'points'>('points');
   const [flights, setFlights] = useState<Flight[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
@@ -2157,7 +2157,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     gap: '6px',
     padding: '9px 16px',
     minWidth: '124px',
-    border: 'none',
     cursor: 'pointer',
     fontFamily: 'inherit',
     whiteSpace: 'nowrap',
