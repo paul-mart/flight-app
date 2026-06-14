@@ -598,6 +598,138 @@ function formatRouteLabel(origin: string, destination: string): string {
   return `${origin} – ${destination}`;
 }
 
+const TRENDING_DEALS = [
+  {
+    city: 'Tokyo',
+    country: 'Japan',
+    image: 'https://images.unsplash.com/photo-1542051841857-5f90071e7989?auto=format&fit=crop&w=900&q=80',
+    points: 'From 30k Points',
+    cash: 'From $589',
+  },
+  {
+    city: 'Paris',
+    country: 'France',
+    image: 'https://images.unsplash.com/photo-1499856871958-5b9627545d1a?auto=format&fit=crop&w=900&q=80',
+    points: 'From 28k Points',
+    cash: 'From $512',
+  },
+  {
+    city: 'London',
+    country: 'United Kingdom',
+    image: 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=900&q=80',
+    points: 'From 25k Points',
+    cash: 'From $468',
+  },
+  {
+    city: 'New York',
+    country: 'United States',
+    image: 'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?auto=format&fit=crop&w=900&q=80',
+    points: 'From 12k Points',
+    cash: 'From $198',
+  },
+] as const;
+
+const FLIGHTHERO_LOGO = '/flighthero-logo.png?v=6';
+
+function FlightHeroLogo({ variant = 'hero' }: { variant?: 'hero' | 'nav' }) {
+  return (
+    <img
+      src={FLIGHTHERO_LOGO}
+      alt="FlightHero"
+      className={`flighthero-logo flighthero-logo--${variant}`}
+      decoding="async"
+    />
+  );
+}
+
+function TopNavbar() {
+  return (
+    <header className="top-nav">
+      <div className="top-nav-inner">
+        <a href="/" className="top-nav-brand" aria-label="FlightHero home">
+          <FlightHeroLogo variant="nav" />
+        </a>
+        <nav className="top-nav-links" aria-label="Main navigation">
+          <a href="#deals" className="top-nav-link">Deals</a>
+          <a href="#explore" className="top-nav-link">Explore</a>
+          <a href="#points-guide" className="top-nav-link">Points Guide</a>
+          <button type="button" className="top-nav-sign-in">Sign In</button>
+        </nav>
+      </div>
+    </header>
+  );
+}
+
+function TrendingDeals() {
+  return (
+    <section className="trending-deals" id="deals" aria-labelledby="trending-deals-title">
+      <div className="trending-deals-inner">
+        <h2 id="trending-deals-title" className="trending-deals-title">Trending Deals</h2>
+        <p className="trending-deals-subtitle">Popular routes with sample award and cash fares</p>
+        <div className="trending-deals-grid">
+          {TRENDING_DEALS.map((deal) => (
+            <article key={deal.city} className="trending-deal-card">
+              <img
+                className="trending-deal-image"
+                src={deal.image}
+                alt=""
+                loading="lazy"
+              />
+              <div className="trending-deal-overlay" aria-hidden />
+              <div className="trending-deal-content">
+                <div>
+                  <h3 className="trending-deal-city">{deal.city}</h3>
+                  <p className="trending-deal-country">{deal.country}</p>
+                </div>
+                <div className="trending-deal-tags">
+                  <span className="trending-deal-tag trending-deal-tag-points">{deal.points}</span>
+                  <span className="trending-deal-tag trending-deal-tag-cash">{deal.cash}</span>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function HeroCopyBlock() {
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          setVisible(entry.isIntersecting);
+        });
+      },
+      { threshold: 0.2 }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div
+      ref={ref}
+      className={`hero-copy${visible ? ' hero-copy--visible' : ''}`}
+    >
+      <h1 className="hero-headline">
+        <FlightHeroLogo variant="hero" />
+      </h1>
+      <p className="hero-subheadline">
+        Compare award space and cash fares in one search — find the best way to fly.
+      </p>
+    </div>
+  );
+}
+
 function SearchModeTabs({
   value,
   onChange,
@@ -606,25 +738,26 @@ function SearchModeTabs({
   onChange: (next: 'cash' | 'points') => void;
 }) {
   return (
-    <div className="search-mode-tabs" role="tablist" aria-label="Search type">
+    <div className="search-mode-bar" role="tablist" aria-label="Search type">
       <button
         type="button"
         role="tab"
         id="search-tab-points"
         aria-selected={value === 'points'}
         aria-controls="search-panel-body"
-        className={`search-mode-tab search-mode-tab-left${value === 'points' ? ' search-mode-tab-active' : ''}`}
+        className={`search-mode-option${value === 'points' ? ' search-mode-option-active' : ''}`}
         onClick={() => onChange('points')}
       >
         Points Search
       </button>
+      <div className="search-mode-separator" aria-hidden="true" />
       <button
         type="button"
         role="tab"
         id="search-tab-cash"
         aria-selected={value === 'cash'}
         aria-controls="search-panel-body"
-        className={`search-mode-tab search-mode-tab-right${value === 'cash' ? ' search-mode-tab-active' : ''}`}
+        className={`search-mode-option${value === 'cash' ? ' search-mode-option-active' : ''}`}
         onClick={() => onChange('cash')}
       >
         Cash Search
@@ -1309,23 +1442,25 @@ export default function App() {
   };
 
   return (
-    <div className="app-container" style={styles.container}>
-      <header className="app-header" style={styles.header}>
-        <h1>✈️ FlightHero</h1>
-        <p>Find the best routes using cash or credit card transfer points</p>
-      </header>
+    <div className="app-page">
+      <TopNavbar />
 
-      {/* Search Panel */}
-      <div className="search-panel-wrap" style={styles.searchPanelWrap}>
-        <SearchModeTabs value={searchType} onChange={handleSearchTypeChange} />
-        <div
-          id="search-panel-body"
-          className="search-panel"
-          style={styles.searchPanel}
-          role="tabpanel"
-          aria-labelledby={searchType === 'cash' ? 'search-tab-cash' : 'search-tab-points'}
-        >
-        <form onSubmit={handleSearch} style={styles.form}>
+      <section className={`hero-section${hasSearched ? ' hero-section--searched' : ''}`} aria-label="Flight search">
+        <div className="hero-backdrop" aria-hidden />
+        <div className="hero-inner">
+          <HeroCopyBlock />
+
+          <div className="hero-search">
+            <div className="search-panel-wrap" style={styles.searchPanelWrap}>
+              <SearchModeTabs value={searchType} onChange={handleSearchTypeChange} />
+              <div
+                id="search-panel-body"
+                className="search-panel"
+                style={styles.searchPanel}
+                role="tabpanel"
+                aria-labelledby={searchType === 'cash' ? 'search-tab-cash' : 'search-tab-points'}
+              >
+              <form onSubmit={handleSearch} style={styles.form}>
           <div className="filter-bar" style={styles.filterBar}>
             <FilterDropdown
               value={tripType}
@@ -1509,9 +1644,15 @@ export default function App() {
             </div>
           </div>
         )}
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
+      </section>
 
+      {!hasSearched && <TrendingDeals />}
+
+      <div className="app-content" style={styles.container}>
       {/* Results Section */}
       <main className="results-container" style={styles.resultsContainer}>
         {hasSearched && flights.length > 0 && (
@@ -1656,6 +1797,7 @@ export default function App() {
           !hasSearched && <div style={styles.emptyState}>Enter your route details above to explore options.</div>
         )}
       </main>
+      </div>
 
       {selectedFlight && (
         <FlightDetailModal
@@ -1721,23 +1863,22 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontFamily: FONT_FAMILY,
     maxWidth: '1100px',
     margin: '0 auto',
-    padding: '16px',
+    padding: '24px 16px 48px',
     color: '#111827',
   },
-  header: { textAlign: 'center', marginBottom: '20px' },
   searchPanelWrap: {
     width: '100%',
+    maxWidth: '920px',
   },
   searchPanel: {
     background: '#fff',
-    borderRadius: '0 0 12px 12px',
-    border: '1px solid #e5e7eb',
-    borderTop: 'none',
-    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.04)',
+    border: 'none',
+    borderRadius: 0,
+    boxShadow: 'none',
   },
   advancedSection: {
     borderTop: '1px solid #f0f0f0',
-    padding: '16px 24px 20px',
+    padding: '12px 20px 16px',
   },
   advancedToggle: {
     display: 'flex',
@@ -1786,8 +1927,8 @@ const styles: { [key: string]: React.CSSProperties } = {
     display: 'flex',
     flexWrap: 'wrap',
     alignItems: 'center',
-    gap: '6px 28px',
-    padding: '14px 24px 6px',
+    gap: '4px 20px',
+    padding: '10px 20px 4px',
     borderBottom: '1px solid #f0f0f0',
   },
   filterDropdown: {
@@ -1799,9 +1940,9 @@ const styles: { [key: string]: React.CSSProperties } = {
     gap: '8px',
     border: 'none',
     background: 'transparent',
-    padding: '8px 4px',
+    padding: '6px 4px',
     cursor: 'pointer',
-    fontSize: '16px',
+    fontSize: '15px',
     fontWeight: 500,
     color: '#3c4043',
     outline: 'none',
@@ -1950,8 +2091,8 @@ const styles: { [key: string]: React.CSSProperties } = {
   mainBar: {
     display: 'flex',
     alignItems: 'stretch',
-    gap: '12px',
-    padding: '8px 24px 20px',
+    gap: '10px',
+    padding: '6px 20px 16px',
     flexWrap: 'wrap',
   },
   routeBlock: {
@@ -2134,20 +2275,20 @@ const styles: { [key: string]: React.CSSProperties } = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: '10px',
+    gap: '8px',
     color: '#fff',
     border: 'none',
-    padding: '0 36px',
-    fontSize: '16px',
+    padding: '0 28px',
+    fontSize: '15px',
     fontWeight: 600,
     cursor: 'pointer',
-    minHeight: '56px',
-    minWidth: '148px',
+    minHeight: '48px',
+    minWidth: '132px',
     flexShrink: 0,
     alignSelf: 'stretch',
     marginLeft: 'auto',
   },
-  resultsContainer: { marginTop: '16px' },
+  resultsContainer: { marginTop: '0' },
   resultsCount: {
     margin: '0 0 10px',
     fontSize: '13px',

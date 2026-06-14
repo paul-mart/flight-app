@@ -18,6 +18,371 @@ body {
   min-height: 100vh;
 }
 
+/* ── Landing page layout ── */
+
+.app-page {
+  min-height: 100vh;
+}
+
+.top-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 200;
+  height: 80px;
+  background: rgba(15, 23, 42, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.top-nav-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 100%;
+  padding: 0 clamp(16px, 2.5vw, 40px);
+}
+
+.top-nav-brand {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+  color: #fff;
+}
+
+.flighthero-logo {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+  background: transparent;
+}
+
+.flighthero-logo--hero {
+  height: clamp(2rem, 5vw, 2.75rem);
+  margin: 0 auto;
+}
+
+.flighthero-logo--nav {
+  height: 1.875rem;
+}
+
+.top-nav-links {
+  display: flex;
+  align-items: center;
+  gap: 36px;
+}
+
+.top-nav-link {
+  font-size: 1.0625rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.82);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.top-nav-link:hover {
+  color: #fff;
+}
+
+.top-nav-sign-in {
+  margin-left: 8px;
+  padding: 11px 26px;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  color: #fff;
+  background: #4f46e5;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.top-nav-sign-in:hover {
+  background: #4338ca;
+}
+
+.top-nav-sign-in:focus-visible {
+  outline: 2px solid #a5b4fc;
+  outline-offset: 2px;
+}
+
+.hero-section {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 104px clamp(16px, 2.5vw, 40px) 64px;
+  overflow: hidden;
+}
+
+.hero-section--searched {
+  min-height: auto;
+  padding-top: 112px;
+  padding-bottom: 32px;
+}
+
+.hero-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    linear-gradient(135deg, rgba(15, 23, 42, 0.88) 0%, rgba(30, 27, 75, 0.82) 45%, rgba(49, 46, 129, 0.78) 100%),
+    url('https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=1920&q=80') center / cover no-repeat;
+}
+
+.hero-backdrop::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 20%, rgba(99, 102, 241, 0.35) 0%, transparent 55%),
+    radial-gradient(ellipse 70% 50% at 85% 75%, rgba(139, 92, 246, 0.28) 0%, transparent 50%),
+    linear-gradient(160deg, transparent 40%, rgba(15, 23, 42, 0.4) 100%);
+  pointer-events: none;
+}
+
+.hero-backdrop::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.15;
+  background-image:
+    linear-gradient(30deg, rgba(255, 255, 255, 0.06) 12%, transparent 12.5%, transparent 87%, rgba(255, 255, 255, 0.06) 87.5%),
+    linear-gradient(150deg, rgba(255, 255, 255, 0.06) 12%, transparent 12.5%, transparent 87%, rgba(255, 255, 255, 0.06) 87.5%);
+  background-size: 80px 140px;
+  pointer-events: none;
+}
+
+.hero-inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: min(920px, 100%);
+}
+
+.hero-copy {
+  text-align: center;
+  margin-bottom: 20px;
+  opacity: 0;
+  transform: translateY(14px);
+}
+
+.hero-copy--visible {
+  animation: hero-copy-fade-in 0.85s ease forwards;
+}
+
+@keyframes hero-copy-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.hero-headline {
+  margin: 0 0 12px;
+  line-height: 0;
+}
+
+.hero-subheadline {
+  margin: 0;
+  max-width: 480px;
+  margin-left: auto;
+  margin-right: auto;
+  font-size: 0.9375rem;
+  font-weight: 400;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.hero-search {
+  width: 100%;
+}
+
+.trending-deals {
+  padding: 56px clamp(16px, 2.5vw, 40px) 72px;
+  background: #f9fafb;
+}
+
+.trending-deals-inner {
+  width: 100%;
+}
+
+.trending-deals-title {
+  margin: 0 0 8px;
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #111827;
+}
+
+.trending-deals-subtitle {
+  margin: 0 0 28px;
+  font-size: 1rem;
+  color: #6b7280;
+}
+
+.trending-deals-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+.trending-deal-card {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.trending-deal-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.14);
+}
+
+.trending-deal-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.trending-deal-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(15, 23, 42, 0.85) 0%, rgba(15, 23, 42, 0.15) 55%, transparent 100%);
+}
+
+.trending-deal-content {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 18px;
+  gap: 12px;
+}
+
+.trending-deal-city {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.01em;
+}
+
+.trending-deal-country {
+  margin: 2px 0 0;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.trending-deal-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.trending-deal-tag {
+  display: inline-block;
+  padding: 5px 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 6px;
+  letter-spacing: 0.01em;
+}
+
+.trending-deal-tag-points {
+  color: #fff;
+  background: rgba(79, 70, 229, 0.9);
+}
+
+.trending-deal-tag-cash {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(4px);
+}
+
+@media (max-width: 1024px) {
+  .trending-deals-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .top-nav {
+    height: 72px;
+  }
+
+  .top-nav-inner {
+    padding: 0 16px;
+  }
+
+  .flighthero-logo--nav {
+    height: 1.625rem;
+  }
+
+  .top-nav-links {
+    gap: 16px;
+  }
+
+  .top-nav-link {
+    display: none;
+  }
+
+  .top-nav-sign-in {
+    margin-left: 0;
+    padding: 9px 18px;
+    font-size: 0.9375rem;
+  }
+
+  .hero-section {
+    padding: 96px 16px 48px;
+  }
+
+  .hero-section--searched {
+    padding-top: 104px;
+  }
+
+  .hero-copy {
+    margin-bottom: 16px;
+  }
+
+  .hero-subheadline {
+    font-size: 0.875rem;
+  }
+
+  .trending-deals {
+    padding: 40px 16px 56px;
+  }
+}
+
+@media (max-width: 480px) {
+  .trending-deals-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .trending-deal-card {
+    aspect-ratio: 16 / 9;
+  }
+}
+
 input,
 select,
 button,
@@ -100,52 +465,64 @@ html {
   padding: 0 8px;
 }
 
-.search-mode-tabs {
+.search-mode-bar {
   display: flex;
+  align-items: stretch;
   width: 100%;
-  gap: 6px;
+  background: #fff;
+  border-bottom: 1px solid #e5e7eb;
 }
 
-.search-mode-tab {
+.search-mode-option {
   flex: 1;
-  padding: 12px 14px 13px;
-  border: 1px solid #e5e7eb;
-  border-bottom: none;
-  background: #f3f4f6;
-  color: #4b5563;
-  font-size: 15px;
+  margin: 0;
+  padding: 12px 14px;
+  border: none;
+  background: #f9fafb;
+  color: #6b7280;
+  font-size: 14px;
   font-weight: 600;
   font-family: inherit;
+  letter-spacing: -0.01em;
+  text-align: center;
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  transition: background 0.2s ease, color 0.2s ease;
   -webkit-tap-highlight-color: transparent;
 }
 
-.search-mode-tab-left {
-  border-radius: 14px 4px 0 0;
-}
-
-.search-mode-tab-right {
-  border-radius: 4px 14px 0 0;
-}
-
-.search-mode-tab-active {
+.search-mode-option-active {
   background: #fff;
   color: #111827;
-  border-bottom: 3px solid #4338ca;
-  padding-bottom: 10px;
-  margin-bottom: -1px;
-  position: relative;
+}
+
+.search-mode-option:not(.search-mode-option-active):hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.search-mode-option:focus-visible {
+  outline: 2px solid #6366f1;
+  outline-offset: -2px;
   z-index: 1;
 }
 
-.search-mode-tab:not(.search-mode-tab-active) {
-  opacity: 1;
+.search-mode-separator {
+  flex: 0 0 1px;
+  align-self: stretch;
+  background: #e5e7eb;
 }
 
-.search-mode-tab:not(.search-mode-tab-active):hover {
-  background: #e5e7eb;
-  color: #374151;
+.search-panel-wrap {
+  width: 100%;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 8px 28px rgba(15, 23, 42, 0.14), 0 2px 6px rgba(15, 23, 42, 0.06);
+}
+
+.search-panel {
+  background: #fff;
 }
 
 .max-taxes-slider {
@@ -360,14 +737,9 @@ html {
     margin-bottom: 16px !important;
   }
 
-  .search-mode-tab {
-    padding: 10px 10px 11px !important;
+  .search-mode-option {
+    padding: 10px 10px !important;
     font-size: 13px !important;
-  }
-
-  .search-mode-tab-active {
-    padding-bottom: 8px !important;
-    border-bottom-width: 3px !important;
   }
 
   .filter-bar {
@@ -433,8 +805,8 @@ html {
     width: 100% !important;
     min-width: 0 !important;
     margin-left: 0 !important;
-    min-height: 52px !important;
-    padding: 0 24px !important;
+    min-height: 46px !important;
+    padding: 0 20px !important;
   }
 
   .advanced-section {
