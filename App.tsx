@@ -702,9 +702,16 @@ interface ReturnLegFields {
   return_duration_minutes?: number;
 }
 
+interface BookingLinks {
+  seats_aero: string;
+  program: string;
+}
+
 interface Flight {
   id: number | string;
   departure_token?: string;
+  booking_token?: string;
+  booking_links?: BookingLinks;
   origin: string;
   destination: string;
   departure_date: string;
@@ -862,6 +869,237 @@ function sortFlights(flights: Flight[], sortOption: SortOption, searchType: 'cas
   return sorted;
 }
 
+function formatDisplayDate(iso: string): string {
+  const match = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return iso;
+  const date = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+  return date.toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}
+
+function buildGoogleFlightsUrl(
+  origin: string,
+  destination: string,
+  departureDate: string,
+  returnDate?: string,
+): string {
+  const query = returnDate
+    ? `Flights from ${origin} to ${destination} on ${departureDate} returning ${returnDate}`
+    : `Flights from ${origin} to ${destination} on ${departureDate}`;
+  return `https://www.google.com/travel/flights?q=${encodeURIComponent(query)}`;
+}
+
+function buildCashBookingUrl(
+  flight: Flight,
+  tripType: 'one-way' | 'round-trip',
+  returnDate: string,
+): string {
+  if (flight.booking_token) {
+    const params = new URLSearchParams({
+      booking_token: flight.booking_token,
+      origin: flight.origin,
+      destination: flight.destination,
+      departure_date: flight.departure_date,
+    });
+    if (tripType === 'round-trip' && returnDate) {
+      params.set('return_date', returnDate);
+    }
+    return apiUrl(`/api/booking-redirect?${params}`);
+  }
+  return buildGoogleFlightsUrl(
+    flight.origin,
+    flight.destination,
+    flight.departure_date,
+    tripType === 'round-trip' ? returnDate : undefined,
+  );
+}
+
+function FlightDetailModal({
+  flight,
+  searchType,
+  tripType,
+  returnDate,
+  onClose,
+}: {
+  flight: Flight;
+  searchType: 'cash' | 'points';
+  tripType: 'one-way' | 'round-trip';
+  returnDate: string;
+  onClose: () => void;
+}) {
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [onClose]);
+
+  const googleFlightsUrl = buildGoogleFlightsUrl(
+    flight.origin,
+    flight.destination,
+    flight.departure_date,
+    tripType === 'round-trip' ? returnDate : undefined,
+  );
+  const cashBookingUrl = buildCashBookingUrl(flight, tripType, returnDate);
+  const programName = flight.award_details?.mileage_program ?? 'mileage program';
+  const hasReturn = tripType === 'round-trip'
+    && (flight.return_flight_number || flight.return_departure_time);
+
+  return (
+    <div
+      className="modal-overlay"
+      style={styles.modalOverlay}
+      onClick={onClose}
+      role="presentation"
+    >
+      <div
+        className="flight-detail-modal"
+        style={styles.flightDetailModal}
+        role="dialog"
+        aria-labelledby="flight-detail-title"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div style={styles.flightDetailHeader}>
+          <div style={styles.flightDetailTitleRow}>
+            <CarrierBadge carrier={flight.carrier} logos={flight.carrier_logos} />
+            <div>
+              <h2 id="flight-detail-title" style={styles.flightDetailTitle}>
+                {flight.origin} → {flight.destination}
+              </h2>
+              <p style={styles.flightDetailSubtitle}>
+                {formatDisplayDate(flight.departure_date)}
+                {tripType === 'round-trip' && returnDate ? ` – ${formatDisplayDate(returnDate)}` : ''}
+              </p>
+            </div>
+          </div>
+          <button type="button" style={styles.flightDetailClose} onClick={onClose} aria-label="Close">
+            ×
+          </button>
+        </div>
+
+        <div style={styles.flightDetailSection}>
+          <h3 style={styles.flightDetailSectionTitle}>Outbound</h3>
+          <p style={styles.flightDetailLine}>
+            {flight.departure_time && flight.arrival_time
+              ? `${flight.departure_time} – ${flight.arrival_time}`
+              : 'Times unavailable'}
+          </p>
+          <p style={styles.flightDetailMeta}>
+            {flightDetailLine(flight.carrier, flight.flight_number, flight.duration, flight.stops)}
+          </p>
+        </div>
+
+        {hasReturn && (
+          <div style={styles.flightDetailSection}>
+            <h3 style={styles.flightDetailSectionTitle}>Return</h3>
+            <p style={styles.flightDetailLine}>
+              {flight.return_departure_time && flight.return_arrival_time
+                ? `${flight.return_departure_time} – ${flight.return_arrival_time}`
+                : 'Times unavailable'}
+            </p>
+            <p style={styles.flightDetailMeta}>
+              {flightDetailLine(
+                flight.return_carrier ?? flight.carrier,
+                flight.return_flight_number ?? '',
+                flight.return_duration ?? '—',
+                flight.return_stops ?? 0,
+              )}
+            </p>
+          </div>
+        )}
+
+        <div style={styles.flightDetailSection}>
+          <h3 style={styles.flightDetailSectionTitle}>Price</h3>
+          {searchType === 'cash' ? (
+            <p style={styles.flightDetailPrice}>{formatPrice(flight.cash_price)}</p>
+          ) : flight.award_details ? (
+            <>
+              <p style={styles.flightDetailPoints}>
+                {flight.award_details.points_required.toLocaleString()} points
+              </p>
+              <p style={styles.flightDetailMeta}>
+                + {formatPrice(flight.award_details.taxes_and_fees)} taxes & fees
+              </p>
+              {flight.award_details.mileage_program && (
+                <p style={styles.flightDetailMeta}>{flight.award_details.mileage_program}</p>
+              )}
+              {flight.award_details.seats_remaining != null && flight.award_details.seats_remaining > 0 && (
+                <p style={styles.flightDetailMeta}>
+                  {flight.award_details.seats_remaining} seat{flight.award_details.seats_remaining === 1 ? '' : 's'} left
+                </p>
+              )}
+              {flight.award_details.transfer_partners.length > 0 && (
+                <div style={styles.flightDetailPartners}>
+                  <span style={styles.flightDetailMeta}>Transfer partners: </span>
+                  {flight.award_details.transfer_partners.join(', ')}
+                </div>
+              )}
+            </>
+          ) : null}
+        </div>
+
+        <div style={styles.flightDetailActions}>
+          {searchType === 'cash' ? (
+            <>
+              <a
+                href={cashBookingUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={styles.flightDetailPrimaryLink}
+              >
+                {flight.booking_token ? 'Book this flight' : 'View on Google Flights'}
+              </a>
+              {flight.booking_token && (
+                <a
+                  href={googleFlightsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={styles.flightDetailSecondaryLink}
+                >
+                  View on Google Flights
+                </a>
+              )}
+            </>
+          ) : (
+            <>
+              {flight.booking_links?.program && (
+                <a
+                  href={flight.booking_links.program}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={styles.flightDetailPrimaryLink}
+                >
+                  Book with {programName}
+                </a>
+              )}
+              {flight.booking_links?.seats_aero && (
+                <a
+                  href={flight.booking_links.seats_aero}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={styles.flightDetailSecondaryLink}
+                >
+                  View on Seats.aero
+                </a>
+              )}
+            </>
+          )}
+        </div>
+        <p style={styles.flightDetailDisclaimer}>
+          {searchType === 'cash'
+            ? 'Booking opens the airline or partner site via Google Flights. Prices may change.'
+            : 'Award space is from Seats.aero cached data. Always verify availability before booking.'}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 function formatPrice(amount: number): string {
   return `$${Math.round(amount).toLocaleString()}`;
 }
@@ -935,6 +1173,7 @@ export default function App() {
   const [validationWarning, setValidationWarning] = useState<string | null>(null);
   const [modalTitle, setModalTitle] = useState('Missing information');
   const [loadingReturnDetails, setLoadingReturnDetails] = useState(false);
+  const [selectedFlight, setSelectedFlight] = useState<Flight | null>(null);
   const searchSeqRef = useRef(0);
 
   const showDialog = (title: string, message: string) => {
@@ -1294,10 +1533,13 @@ export default function App() {
         {displayedFlights.length > 0 ? (
           displayedFlights.map((flight) => (
             <div key={flight.id} className="flight-card" style={styles.flightCard}>
-              <div className="flight-info" style={styles.flightInfo}>
-                <CarrierBadge carrier={flight.carrier} logos={flight.carrier_logos} />
-                <div className="route-details" style={styles.routeDetails}>
-                  <strong>{flight.origin} → {flight.destination}</strong>
+              <div className="flight-card-body" style={styles.flightCardBody}>
+                <div className="flight-info" style={styles.flightInfo}>
+                  <CarrierBadge carrier={flight.carrier} logos={flight.carrier_logos} />
+                  <div className="route-details" style={styles.routeDetails}>
+                    <strong className="flight-route-label" style={styles.routeLabel}>
+                      {flight.origin} → {flight.destination}
+                    </strong>
                   {flight.departure_time && flight.arrival_time && (
                     <span style={styles.timeText}>
                       {flight.departure_time} – {flight.arrival_time}
@@ -1310,7 +1552,9 @@ export default function App() {
                     searchType === 'points' ? (
                       (flight.return_flight_number || flight.return_departure_time) ? (
                         <>
-                          <strong style={styles.returnLabel}>{flight.destination} → {flight.origin}</strong>
+                          <strong className="flight-route-label" style={styles.returnLabel}>
+                            {flight.destination} → {flight.origin}
+                          </strong>
                           {flight.return_departure_time && flight.return_arrival_time && (
                             <span style={styles.timeText}>
                               {flight.return_departure_time} – {flight.return_arrival_time}
@@ -1328,7 +1572,9 @@ export default function App() {
                       ) : null
                     ) : (
                     <>
-                      <strong style={styles.returnLabel}>{flight.destination} → {flight.origin}</strong>
+                      <strong className="flight-route-label" style={styles.returnLabel}>
+                        {flight.destination} → {flight.origin}
+                      </strong>
                       {flight.return_flight_number ? (
                         <>
                           {flight.return_departure_time && flight.return_arrival_time && (
@@ -1356,35 +1602,46 @@ export default function App() {
                 </div>
               </div>
 
-              <div className="pricing-section" style={styles.pricingSection}>
-                {searchType === 'cash' ? (
-                  <>
-                    {tripType === 'round-trip' && (
-                      <div className="price-hint" style={styles.priceHint}>Round trip</div>
-                    )}
-                    <div className="price-text" style={styles.priceText}>{formatPrice(flight.cash_price)}</div>
-                  </>
-                ) : (
-                  flight.award_details && (
-                    <div style={{ textAlign: 'right' }}>
+              <div className="flight-card-actions" style={styles.flightCardActions}>
+                <div className="pricing-section" style={styles.pricingSection}>
+                  {searchType === 'cash' ? (
+                    <>
                       {tripType === 'round-trip' && (
                         <div className="price-hint" style={styles.priceHint}>Round trip</div>
                       )}
-                      <div style={styles.pointsText}>
-                        {flight.award_details.points_required.toLocaleString()} pts
+                      <div className="price-text" style={styles.priceText}>{formatPrice(flight.cash_price)}</div>
+                    </>
+                  ) : (
+                    flight.award_details && (
+                      <div style={{ textAlign: 'right' }}>
+                        {tripType === 'round-trip' && (
+                          <div className="price-hint" style={styles.priceHint}>Round trip</div>
+                        )}
+                        <div style={styles.pointsText}>
+                          {flight.award_details.points_required.toLocaleString()} pts
+                        </div>
+                        <div style={styles.subtext}>+ {formatPrice(flight.award_details.taxes_and_fees)} fees</div>
+                        {flight.award_details.mileage_program && (
+                          <div style={styles.programTag}>{flight.award_details.mileage_program}</div>
+                        )}
+                        <div className="partner-container" style={styles.partnerContainer}>
+                          {flight.award_details.transfer_partners.map((p, i) => (
+                            <span key={i} style={styles.partnerTag}>{p}</span>
+                          ))}
+                        </div>
                       </div>
-                      <div style={styles.subtext}>+ {formatPrice(flight.award_details.taxes_and_fees)} fees</div>
-                      {flight.award_details.mileage_program && (
-                        <div style={styles.programTag}>{flight.award_details.mileage_program}</div>
-                      )}
-                      <div className="partner-container" style={styles.partnerContainer}>
-                        {flight.award_details.transfer_partners.map((p, i) => (
-                          <span key={i} style={styles.partnerTag}>{p}</span>
-                        ))}
-                      </div>
-                    </div>
-                  )
-                )}
+                    )
+                  )}
+                </div>
+                <button
+                  type="button"
+                  className="view-flight-btn"
+                  style={styles.viewFlightBtn}
+                  onClick={() => setSelectedFlight(flight)}
+                >
+                  View flight
+                </button>
+              </div>
               </div>
             </div>
           ))
@@ -1401,6 +1658,16 @@ export default function App() {
           !hasSearched && <div style={styles.emptyState}>Enter your route details above to explore options.</div>
         )}
       </main>
+
+      {selectedFlight && (
+        <FlightDetailModal
+          flight={selectedFlight}
+          searchType={searchType}
+          tripType={tripType}
+          returnDate={returnDate}
+          onClose={() => setSelectedFlight(null)}
+        />
+      )}
 
       {validationWarning && (
         <div
@@ -1890,40 +2157,202 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   flightCard: {
     display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: '20px',
+    background: 'rgba(255, 255, 255, 0.94)',
+    padding: '22px 24px',
+    borderRadius: '12px',
+    border: '1px solid rgba(199, 210, 254, 0.55)',
+    marginBottom: '12px',
+    boxShadow: '0 2px 16px rgba(99, 102, 241, 0.1)',
+  },
+  flightCardBody: {
+    display: 'flex',
+    flex: 1,
     justifyContent: 'space-between',
     alignItems: 'center',
-    background: 'rgba(255, 255, 255, 0.92)',
-    padding: '20px',
-    borderRadius: '8px',
-    border: '1px solid rgba(218, 220, 224, 0.8)',
-    marginBottom: '12px',
-    boxShadow: '0 2px 12px rgba(99, 102, 241, 0.08)',
+    gap: '24px',
+    minWidth: 0,
+    width: '100%',
   },
-  flightInfo: { display: 'flex', gap: '20px', alignItems: 'center' },
+  flightCardActions: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+    gap: '10px',
+    flexShrink: 0,
+    minWidth: '148px',
+  },
+  viewFlightBtn: {
+    ...fieldFont,
+    background: '#fff',
+    color: '#4338ca',
+    border: '1px solid #c7d2fe',
+    padding: '10px 18px',
+    borderRadius: '8px',
+    fontSize: '14px',
+    fontWeight: 600,
+    cursor: 'pointer',
+    whiteSpace: 'nowrap',
+    transition: 'background 0.15s ease, border-color 0.15s ease',
+  },
+  flightDetailModal: {
+    background: '#fff',
+    borderRadius: '16px',
+    padding: '24px',
+    maxWidth: '520px',
+    width: '100%',
+    maxHeight: '90vh',
+    overflowY: 'auto',
+    boxShadow: '0 16px 48px rgba(0, 0, 0, 0.2)',
+  },
+  flightDetailHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: '12px',
+    marginBottom: '20px',
+  },
+  flightDetailTitleRow: {
+    display: 'flex',
+    gap: '14px',
+    alignItems: 'center',
+  },
+  flightDetailTitle: {
+    margin: 0,
+    fontSize: '20px',
+    fontWeight: 600,
+    color: '#1f2937',
+  },
+  flightDetailSubtitle: {
+    margin: '4px 0 0',
+    fontSize: '14px',
+    color: '#6b7280',
+  },
+  flightDetailClose: {
+    border: 'none',
+    background: '#f3f4f6',
+    color: '#6b7280',
+    width: '36px',
+    height: '36px',
+    borderRadius: '10px',
+    fontSize: '24px',
+    lineHeight: 1,
+    cursor: 'pointer',
+    flexShrink: 0,
+  },
+  flightDetailSection: {
+    marginBottom: '18px',
+    paddingBottom: '18px',
+    borderBottom: '1px solid #f0f0f0',
+  },
+  flightDetailSectionTitle: {
+    margin: '0 0 8px',
+    fontSize: '13px',
+    fontWeight: 600,
+    color: '#6366f1',
+    textTransform: 'uppercase',
+    letterSpacing: '0.04em',
+  },
+  flightDetailLine: {
+    margin: '0 0 4px',
+    fontSize: '16px',
+    fontWeight: 500,
+    color: '#1f2937',
+  },
+  flightDetailMeta: {
+    margin: '0 0 4px',
+    fontSize: '14px',
+    color: '#6b7280',
+  },
+  flightDetailPrice: {
+    margin: 0,
+    fontSize: '28px',
+    fontWeight: 600,
+    color: '#2e7d32',
+  },
+  flightDetailPoints: {
+    margin: 0,
+    fontSize: '26px',
+    fontWeight: 600,
+    color: '#6366f1',
+  },
+  flightDetailPartners: {
+    marginTop: '8px',
+    fontSize: '13px',
+    color: '#6b7280',
+    lineHeight: 1.5,
+  },
+  flightDetailActions: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '10px',
+    marginTop: '8px',
+  },
+  flightDetailPrimaryLink: {
+    display: 'block',
+    textAlign: 'center',
+    background: 'linear-gradient(135deg, #7c3aed 0%, #3b82f6 100%)',
+    color: '#fff',
+    textDecoration: 'none',
+    padding: '12px 16px',
+    borderRadius: '10px',
+    fontSize: '15px',
+    fontWeight: 600,
+  },
+  flightDetailSecondaryLink: {
+    display: 'block',
+    textAlign: 'center',
+    background: '#eef2ff',
+    color: '#4338ca',
+    textDecoration: 'none',
+    padding: '12px 16px',
+    borderRadius: '10px',
+    fontSize: '15px',
+    fontWeight: 600,
+  },
+  flightDetailDisclaimer: {
+    margin: '14px 0 0',
+    fontSize: '12px',
+    color: '#9ca3af',
+    lineHeight: 1.45,
+  },
+  flightInfo: { display: 'flex', gap: '24px', alignItems: 'center', flex: 1, minWidth: 0 },
   carrierLogoGroup: {
     display: 'flex',
     alignItems: 'center',
-    gap: '8px',
+    justifyContent: 'center',
+    gap: '10px',
     flexShrink: 0,
+    minWidth: '64px',
   },
   carrierBadge: {
     background: '#eef2f7',
-    padding: '8px 12px',
-    borderRadius: '6px',
+    padding: '14px 16px',
+    borderRadius: '10px',
     fontWeight: 600,
-    fontSize: '14px',
+    fontSize: '13px',
+    lineHeight: 1.2,
+    minHeight: '52px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    textAlign: 'center',
   },
-  carrierLogo: { height: '32px', width: 'auto', maxWidth: '80px', objectFit: 'contain', display: 'block' },
-  carrierLogoOverflow: { fontSize: '12px', color: '#666', fontWeight: 500 },
-  routeDetails: { display: 'flex', flexDirection: 'column', gap: '4px' },
-  returnLabel: { fontSize: '14px', marginTop: '8px' },
-  returnLoading: { fontSize: '13px', color: '#6b7280', fontStyle: 'italic' },
-  timeText: { fontSize: '15px', fontWeight: 500, color: '#1f2937' },
-  subtext: { fontSize: '13px', color: '#666' },
+  carrierLogo: { height: '48px', width: 'auto', maxWidth: '96px', objectFit: 'contain', display: 'block' },
+  carrierLogoOverflow: { fontSize: '13px', color: '#666', fontWeight: 500 },
+  routeDetails: { display: 'flex', flexDirection: 'column', gap: '5px', minWidth: 0 },
+  routeLabel: { fontSize: '18px', fontWeight: 600, color: '#1f2937', lineHeight: 1.3 },
+  returnLabel: { fontSize: '16px', fontWeight: 600, marginTop: '10px', color: '#374151', lineHeight: 1.3 },
+  returnLoading: { fontSize: '14px', color: '#6b7280', fontStyle: 'italic' },
+  timeText: { fontSize: '16px', fontWeight: 500, color: '#1f2937' },
+  subtext: { fontSize: '14px', color: '#6b7280', lineHeight: 1.4 },
   pricingSection: { display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center' },
-  priceText: { fontSize: '24px', fontWeight: 500, color: '#2e7d32' },
+  priceText: { fontSize: '26px', fontWeight: 600, color: '#2e7d32' },
   priceHint: { fontSize: '12px', color: '#6b7280', marginBottom: '2px', textAlign: 'right' },
-  pointsText: { fontSize: '22px', fontWeight: 500, color: '#6366f1' },
+  pointsText: { fontSize: '24px', fontWeight: 600, color: '#6366f1' },
   programTag: {
     fontSize: '12px',
     color: '#4338ca',

@@ -3,8 +3,11 @@ import re
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
+from html import escape
+from json import dumps as json_dumps
 from pathlib import Path
 from typing import Any
+from urllib.parse import quote_plus
 
 import httpx
 from dotenv import load_dotenv
@@ -361,6 +364,7 @@ def _parse_flight_option(
     result: dict[str, Any] = {
         "id": departure_token or option.get("booking_token") or "",
         "departure_token": departure_token,
+        "booking_token": option.get("booking_token") or "",
         "origin": outbound["origin"],
         "destination": outbound["destination"],
         "departure_date": departure_date,
@@ -510,6 +514,120 @@ def search_flight_offers(
     deduped = _dedupe_flights(parsed)
     deduped.sort(key=lambda flight: flight["cash_price"])
     return deduped[:max_results]
+
+
+def build_google_flights_search_url(
+    origin_code: str,
+    destination_code: str,
+    departure_date: str,
+    return_date: str | None = None,
+) -> str:
+    query = f"Flights from {origin_code} to {destination_code} on {departure_date}"
+    if return_date:
+        query += f" returning {return_date}"
+    return f"https://www.google.com/travel/flights?q={quote_plus(query)}"
+
+
+def _extract_booking_option(option: dict[str, Any]) -> dict[str, Any] | None:
+    together = option.get("together")
+    if isinstance(together, dict):
+        return together
+    if isinstance(option, dict) and option.get("booking_request"):
+        return option
+    return None
+
+
+def fetch_preferred_booking_request(
+    booking_token: str,
+    origin_code: str,
+    destination_code: str,
+    departure_date: str,
+    return_date: str | None = None,
+) -> dict[str, Any]:
+    params: dict[str, Any] = {
+        "engine": "google_flights",
+        "departure_id": origin_code,
+        "arrival_id": destination_code,
+        "outbound_date": departure_date,
+        "booking_token": booking_token,
+        "type": "1" if return_date else "2",
+    }
+    if return_date:
+        params["return_date"] = return_date
+
+    payload = _serpapi_search(params)
+    options = payload.get("booking_options") or []
+
+    airline_option: dict[str, Any] | None = None
+    fallback_option: dict[str, Any] | None = None
+    for option in options:
+        candidate = _extract_booking_option(option)
+        if not candidate:
+            continue
+        booking_request = candidate.get("booking_request") or {}
+        if not booking_request.get("url") or not booking_request.get("post_data"):
+            continue
+        if fallback_option is None:
+            fallback_option = candidate
+        if candidate.get("airline"):
+            airline_option = candidate
+            break
+
+    chosen = airline_option or fallback_option
+    if not chosen:
+        raise SerpAPIError("No booking options were returned for this flight.")
+
+    booking_request = chosen["booking_request"]
+    return {
+        "book_with": chosen.get("book_with") or chosen.get("option_title") or "Partner",
+        "price": chosen.get("price"),
+        "booking_request": booking_request,
+    }
+
+
+def build_booking_redirect_html(url: str, post_data: str) -> str:
+    payload = post_data[2:] if post_data.startswith("u=") else post_data
+    safe_url = json_dumps(url)
+    safe_payload = json_dumps(payload)
+    title = escape("Redirecting to booking…")
+    return f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{title}</title>
+  <style>
+    body {{
+      font-family: system-ui, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      background: #f8fafc;
+      color: #334155;
+    }}
+    p {{ font-size: 16px; }}
+  </style>
+</head>
+<body>
+  <p>Redirecting to booking partner…</p>
+  <script>
+    (function () {{
+      var form = document.createElement("form");
+      form.method = "POST";
+      form.action = {safe_url};
+      var input = document.createElement("input");
+      input.type = "hidden";
+      input.name = "u";
+      input.value = {safe_payload};
+      form.appendChild(input);
+      document.body.appendChild(form);
+      form.submit();
+    }})();
+  </script>
+</body>
+</html>"""
 
 
 def _format_airport_suggestion(

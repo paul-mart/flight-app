@@ -281,6 +281,11 @@ html {
   font-variant-numeric: tabular-nums;
 }
 
+.view-flight-btn:hover {
+  background: #eef2ff;
+  border-color: #a5b4fc;
+}
+
 @media (max-width: 768px) {
   body {
     background-attachment: scroll;
@@ -411,13 +416,40 @@ html {
   .flight-card {
     flex-direction: column !important;
     align-items: stretch !important;
-    gap: 14px !important;
-    padding: 16px !important;
+    gap: 16px !important;
+    padding: 18px !important;
+  }
+
+  .flight-card-body {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 16px !important;
+  }
+
+  .flight-card-actions {
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    border-top: 1px solid #eef2f7;
+    padding-top: 14px;
+    gap: 12px !important;
+  }
+
+  .view-flight-btn {
+    width: auto !important;
+    flex-shrink: 0 !important;
+  }
+
+  .flight-detail-modal {
+    max-height: 85vh !important;
+    padding: 20px !important;
   }
 
   .flight-info {
-    align-items: flex-start !important;
-    gap: 14px !important;
+    align-items: center !important;
+    gap: 18px !important;
   }
 
   .flight-info .route-details {
@@ -429,13 +461,19 @@ html {
     word-break: break-word;
   }
 
+  .flight-route-label {
+    font-size: 17px !important;
+  }
+
   .pricing-section {
-    flex-direction: row !important;
-    align-items: center !important;
-    justify-content: space-between !important;
-    border-top: 1px solid #eef2f7;
-    padding-top: 12px;
-    width: 100%;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    justify-content: center !important;
+    border-top: none !important;
+    padding-top: 0 !important;
+    width: auto !important;
+    flex: 1;
+    min-width: 0;
   }
 
   .pricing-section .price-hint,
@@ -499,8 +537,8 @@ html {
   }
 
   .carrier-logo {
-    max-width: 64px !important;
-    height: 28px !important;
+    max-width: 80px !important;
+    height: 40px !important;
   }
 
   .stepper-btn {

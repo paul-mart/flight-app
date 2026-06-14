@@ -84,6 +84,23 @@ PROGRAM_LABELS: dict[str, str] = {
     "velocity": "Virgin Australia Velocity",
 }
 
+PROGRAM_BOOKING_URLS: dict[str, str] = {
+    "aeroplan": "https://www.aircanada.com/aeroplan/redeem/availability/outbound",
+    "alaska": "https://www.alaskaair.com/search/results",
+    "american": "https://www.aa.com/booking/find-flights",
+    "delta": "https://www.delta.com/flight-search/book-a-flight",
+    "united": "https://www.united.com/en/us/fsb/book/travel/air",
+    "virginatlantic": "https://www.virginatlantic.com/",
+    "jetblue": "https://www.jetblue.com/booking/flights",
+    "southwest": "https://www.southwest.com/air/booking/",
+    "flyingblue": "https://www.flyingblue.com/en/search",
+    "britishairways": "https://www.britishairways.com/travel/redeem/execclub/_gb/en/",
+    "qantas": "https://www.qantas.com/au/en/book-a-trip/flights.html",
+    "singapore": "https://www.singaporeair.com/en_UK/plan-and-book/your-booking/book-a-flight/",
+    "emirates": "https://www.emirates.com/us/english/book/",
+    "lifemiles": "https://www.lifemiles.com/discover/quote-trip",
+}
+
 TRANSFER_PARTNERS: dict[str, list[str]] = {
     "aeroplan": ["Amex Membership Rewards", "Chase Ultimate Rewards", "Capital One"],
     "alaska": ["Amex Membership Rewards", "Chase Ultimate Rewards", "Capital One", "Bilt Rewards"],
@@ -191,6 +208,17 @@ def _program_label(source: str) -> str:
 def _transfer_partners(source: str) -> list[str]:
     key = source.strip().lower()
     return TRANSFER_PARTNERS.get(key, ["Amex Membership Rewards", "Chase Ultimate Rewards", "Capital One"])
+
+
+def _booking_links(source: str, origin: str, destination: str, travel_date: str) -> dict[str, str]:
+    slug = source.strip().lower()
+    return {
+        "seats_aero": (
+            f"https://seats.aero/search?"
+            f"origin={origin}&destination={destination}&departure={travel_date}"
+        ),
+        "program": PROGRAM_BOOKING_URLS.get(slug, "https://seats.aero/"),
+    }
 
 
 def _airline_name(code: str) -> str:
@@ -404,6 +432,7 @@ def _parse_availability(
         "duration_minutes": duration_minutes,
         "stops": stops,
         "cash_price": 0,
+        "booking_links": _booking_links(source, origin, destination, travel_date),
         "award_details": {
             "points_required": points,
             "taxes_and_fees": taxes,
