@@ -75,12 +75,12 @@ export function createTrendingDeal(
   };
 }
 
-/** Three slides of four curated award routes with live-checked starting prices (Seats.aero, Jul 2026). */
+/** Three slides of four curated award routes with live-checked starting prices (Seats.aero). */
 export const TRENDING_DEAL_SLIDES: TrendingDeal[][] = [
   [
     createTrendingDeal('bos-lhr', 'BOS', 'Boston', 'LHR', 'London', 'United Kingdom', '2026-09-12', '2026-09-19', 'From 21,000 pts', '—', 'Virgin Atlantic Flying Club'),
     createTrendingDeal('jfk-cdg', 'JFK', 'New York', 'CDG', 'Paris', 'France', '2026-10-03', '2026-10-10', 'From 45,000 pts', '—', 'Alaska Mileage Plan'),
-    createTrendingDeal('bos-dub', 'BOS', 'Boston', 'DUB', 'Dublin', 'Ireland', '2026-08-21', '2026-08-28', 'From 44,500 pts', '—', 'Air France/KLM Flying Blue'),
+    createTrendingDeal('bos-dub', 'BOS', 'Boston', 'DUB', 'Dublin', 'Ireland', '2026-10-10', '2026-10-17', 'From 44,500 pts', '—', 'Air France/KLM Flying Blue'),
     createTrendingDeal('ewr-fco', 'EWR', 'New York', 'FCO', 'Rome', 'Italy', '2026-11-07', '2026-11-14', 'From 60,000 pts', '—', 'Virgin Australia Velocity'),
   ],
   [
@@ -90,8 +90,8 @@ export const TRENDING_DEAL_SLIDES: TrendingDeal[][] = [
     createTrendingDeal('sea-sin', 'SEA', 'Seattle', 'SIN', 'Singapore', 'Singapore', '2026-10-08', '2026-10-18', 'From 85,000 pts', '—', 'Alaska Mileage Plan'),
   ],
   [
-    createTrendingDeal('jfk-sju', 'JFK', 'New York', 'SJU', 'San Juan', 'Puerto Rico', '2026-07-30', '2026-08-06', 'From 28,500 pts', '—', 'JetBlue TrueBlue'),
-    createTrendingDeal('mia-cun', 'MIA', 'Miami', 'CUN', 'Cancún', 'Mexico', '2026-08-15', '2026-08-22', 'From 22,000 pts', '—', 'American AAdvantage'),
+    createTrendingDeal('jfk-sju', 'JFK', 'New York', 'SJU', 'San Juan', 'Puerto Rico', '2026-10-05', '2026-10-12', 'From 28,500 pts', '—', 'JetBlue TrueBlue'),
+    createTrendingDeal('mia-cun', 'MIA', 'Miami', 'CUN', 'Cancún', 'Mexico', '2026-10-12', '2026-10-19', 'From 22,000 pts', '—', 'American AAdvantage'),
     createTrendingDeal('bos-lis', 'BOS', 'Boston', 'LIS', 'Lisbon', 'Portugal', '2026-09-05', '2026-09-12', 'From 50,000 pts', '—', 'Air France/KLM Flying Blue', { highlightRoundTrip: true }),
     createTrendingDeal('ord-mex', 'ORD', 'Chicago', 'MEX', 'Mexico City', 'Mexico', '2026-10-01', '2026-10-08', 'From 27,500 pts', '—', 'Air Canada Aeroplan'),
   ],

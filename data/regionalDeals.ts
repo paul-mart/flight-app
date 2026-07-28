@@ -20,14 +20,14 @@ function chunkDealsIntoSlides(deals: TrendingDeal[]): TrendingDeal[][] {
 /** Round-trip highlights are interleaved at varied slide positions — never adjacent on a slide. */
 const EUROPE_DEALS: TrendingDeal[] = [
   createTrendingDeal('eu-jfk-cdg', 'JFK', 'New York', 'CDG', 'Paris', 'France', '2026-10-03', '2026-10-10', 'From 45,000 pts', '—', 'Alaska Mileage Plan'),
-  createTrendingDeal('eu-bos-dub', 'BOS', 'Boston', 'DUB', 'Dublin', 'Ireland', '2026-08-21', '2026-08-28', 'From 44,500 pts', '—', 'Air France/KLM Flying Blue'),
+  createTrendingDeal('eu-bos-dub', 'BOS', 'Boston', 'DUB', 'Dublin', 'Ireland', '2026-10-10', '2026-10-17', 'From 44,500 pts', '—', 'Air France/KLM Flying Blue'),
   createTrendingDeal('eu-bos-lhr', 'BOS', 'Boston', 'LHR', 'London', 'United Kingdom', '2026-09-12', '2026-09-19', 'From 21,000 pts', '—', 'Virgin Atlantic Flying Club', { highlightRoundTrip: true }),
   createTrendingDeal('eu-ewr-fco', 'EWR', 'New York', 'FCO', 'Rome', 'Italy', '2026-11-07', '2026-11-14', 'From 60,000 pts', '—', 'Virgin Australia Velocity'),
   createTrendingDeal('eu-lax-lhr', 'LAX', 'Los Angeles', 'LHR', 'London', 'United Kingdom', '2026-10-11', '2026-10-21', 'From 18,000 pts', '—', 'Virgin Atlantic Flying Club', { highlightRoundTrip: true }),
   createTrendingDeal('eu-ord-lhr', 'ORD', 'Chicago', 'LHR', 'London', 'United Kingdom', '2026-09-20', '2026-09-27', 'From 53,750 pts', '—', 'Qatar Privilege Club'),
   createTrendingDeal('eu-bos-lis', 'BOS', 'Boston', 'LIS', 'Lisbon', 'Portugal', '2026-09-05', '2026-09-12', 'From 50,000 pts', '—', 'Air France/KLM Flying Blue'),
   createTrendingDeal('eu-jfk-bcn', 'JFK', 'New York', 'BCN', 'Barcelona', 'Spain', '2026-10-17', '2026-10-24', 'From 55,000 pts', '—', 'Alaska Mileage Plan'),
-  createTrendingDeal('eu-sea-dub', 'SEA', 'Seattle', 'DUB', 'Dublin', 'Ireland', '2026-08-30', '2026-09-06', 'From 60,000 pts', '—', 'American AAdvantage'),
+  createTrendingDeal('eu-sea-dub', 'SEA', 'Seattle', 'DUB', 'Dublin', 'Ireland', '2026-10-18', '2026-10-25', 'From 60,000 pts', '—', 'American AAdvantage'),
   createTrendingDeal('eu-sfo-cdg', 'SFO', 'San Francisco', 'CDG', 'Paris', 'France', '2026-11-02', '2026-11-12', 'From 56,000 pts', '—', 'Virgin Atlantic Flying Club', { highlightRoundTrip: true }),
   createTrendingDeal('eu-mia-lis', 'MIA', 'Miami', 'LIS', 'Lisbon', 'Portugal', '2026-11-14', '2026-11-21', 'From 78,700 pts', '—', 'Air Canada Aeroplan'),
   createTrendingDeal('eu-ord-fco', 'ORD', 'Chicago', 'FCO', 'Rome', 'Italy', '2026-10-25', '2026-11-01', 'From 43,750 pts', '—', 'Air France/KLM Flying Blue', { highlightRoundTrip: true }),
@@ -49,18 +49,18 @@ const ASIA_PACIFIC_DEALS: TrendingDeal[] = [
 ];
 
 const AMERICAS_DEALS: TrendingDeal[] = [
-  createTrendingDeal('am-mia-cun', 'MIA', 'Miami', 'CUN', 'Cancún', 'Mexico', '2026-08-15', '2026-08-22', 'From 22,000 pts', '—', 'American AAdvantage'),
+  createTrendingDeal('am-mia-cun', 'MIA', 'Miami', 'CUN', 'Cancún', 'Mexico', '2026-10-12', '2026-10-19', 'From 22,000 pts', '—', 'American AAdvantage'),
   createTrendingDeal('am-ord-mex', 'ORD', 'Chicago', 'MEX', 'Mexico City', 'Mexico', '2026-10-01', '2026-10-08', 'From 27,500 pts', '—', 'Air Canada Aeroplan'),
   createTrendingDeal('am-lax-cun', 'LAX', 'Los Angeles', 'CUN', 'Cancún', 'Mexico', '2026-09-19', '2026-09-26', 'From 18,000 pts', '—', 'American AAdvantage'),
-  createTrendingDeal('am-jfk-sju', 'JFK', 'New York', 'SJU', 'San Juan', 'Puerto Rico', '2026-07-30', '2026-08-06', 'From 28,500 pts', '—', 'JetBlue TrueBlue', { highlightRoundTrip: true }),
+  createTrendingDeal('am-jfk-sju', 'JFK', 'New York', 'SJU', 'San Juan', 'Puerto Rico', '2026-10-05', '2026-10-12', 'From 28,500 pts', '—', 'JetBlue TrueBlue', { highlightRoundTrip: true }),
   createTrendingDeal('am-jfk-bog', 'JFK', 'New York', 'BOG', 'Bogotá', 'Colombia', '2026-11-08', '2026-11-15', 'From 40,000 pts', '—', 'Air Canada Aeroplan'),
   createTrendingDeal('am-mia-gru', 'MIA', 'Miami', 'GRU', 'São Paulo', 'Brazil', '2026-10-04', '2026-10-14', 'From 50,000 pts', '—', 'Lufthansa', { highlightRoundTrip: true }),
-  createTrendingDeal('am-jfk-eze', 'JFK', 'New York', 'EZE', 'Buenos Aires', 'Argentina', '2026-08-28', '2026-09-08', 'From 55,000 pts', '—', 'Alaska Mileage Plan'),
+  createTrendingDeal('am-jfk-eze', 'JFK', 'New York', 'EZE', 'Buenos Aires', 'Argentina', '2026-11-06', '2026-11-17', 'From 55,000 pts', '—', 'Alaska Mileage Plan'),
   createTrendingDeal('am-mia-gua', 'MIA', 'Miami', 'GUA', 'Guatemala City', 'Guatemala', '2026-10-14', '2026-10-21', 'From 20,000 pts', '—', 'Air Canada Aeroplan', { highlightRoundTrip: true }),
   createTrendingDeal('am-mia-sju', 'MIA', 'Miami', 'SJU', 'San Juan', 'Puerto Rico', '2026-09-12', '2026-09-19', 'From 25,000 pts', '—', 'American AAdvantage'),
   createTrendingDeal('am-sea-cun', 'SEA', 'Seattle', 'CUN', 'Cancún', 'Mexico', '2026-12-06', '2026-12-13', 'From 20,000 pts', '—', 'American AAdvantage'),
-  createTrendingDeal('am-bos-sju', 'BOS', 'Boston', 'SJU', 'San Juan', 'Puerto Rico', '2026-08-08', '2026-08-15', 'From 32,000 pts', '—', 'JetBlue TrueBlue', { highlightRoundTrip: true }),
-  createTrendingDeal('am-ord-cun', 'ORD', 'Chicago', 'CUN', 'Cancún', 'Mexico', '2026-07-30', '2026-08-06', 'From 22,500 pts', '—', 'American AAdvantage'),
+  createTrendingDeal('am-bos-sju', 'BOS', 'Boston', 'SJU', 'San Juan', 'Puerto Rico', '2026-10-03', '2026-10-10', 'From 32,000 pts', '—', 'JetBlue TrueBlue', { highlightRoundTrip: true }),
+  createTrendingDeal('am-ord-cun', 'ORD', 'Chicago', 'CUN', 'Cancún', 'Mexico', '2026-10-08', '2026-10-15', 'From 22,500 pts', '—', 'American AAdvantage'),
 ];
 
 const MIDDLE_EAST_AFRICA_DEALS: TrendingDeal[] = [
@@ -71,7 +71,7 @@ const MIDDLE_EAST_AFRICA_DEALS: TrendingDeal[] = [
   createTrendingDeal('me-lax-nbo', 'SFO', 'Seattle', 'NBO', 'Nairobi', 'Kenya', '2026-11-15', '2026-11-29', 'From 124,500 pts', '—', 'Air France/KLM Flying Blue', { highlightRoundTrip: true }),
   createTrendingDeal('me-jfk-cpt', 'JFK', 'New York', 'CPT', 'Cape Town', 'South Africa', '2026-12-10', '2026-12-24', 'From 118,500 pts', '—', 'Air France/KLM Flying Blue'),
   createTrendingDeal('me-sfo-dxb', 'SFO', 'San Francisco', 'DXB', 'Dubai', 'United Arab Emirates', '2026-09-28', '2026-10-08', 'From 106,200 pts', '—', 'Qantas Frequent Flyer'),
-  createTrendingDeal('me-jfk-acc', 'JFK', 'New York', 'ACC', 'Accra', 'Ghana', '2026-08-22', '2026-09-01', 'From 103,500 pts', '—', 'Air France/KLM Flying Blue', { highlightRoundTrip: true }),
+  createTrendingDeal('me-jfk-acc', 'JFK', 'New York', 'ACC', 'Accra', 'Ghana', '2026-10-16', '2026-10-26', 'From 103,500 pts', '—', 'Air France/KLM Flying Blue', { highlightRoundTrip: true }),
   createTrendingDeal('me-jfk-doh', 'JFK', 'New York', 'DOH', 'Doha', 'Qatar', '2026-10-04', '2026-10-14', 'From 70,000 pts', '—', 'Alaska Mileage Plan'),
   createTrendingDeal('me-bos-cmn', 'BOS', 'Boston', 'CMN', 'Casablanca', 'Morocco', '2026-11-12', '2026-11-22', 'From 58,000 pts', '—', 'Air France/KLM Flying Blue'),
   createTrendingDeal('me-lax-jnb', 'JFK', 'New York', 'NBO', 'Nairobi', 'Kenya', '2026-11-15', '2026-11-29', 'From 74,000 pts', '—', 'Virgin Atlantic Flying Club'),
