@@ -1,7 +1,7 @@
 /**
  * Manually maintained transfer bonus list.
  * Source snapshot: https://frequentmiler.com/current-point-transfer-bonuses/
- * Last synced: July 21, 2026
+ * Last synced: August 3, 2026
  *
  * To update: edit ACTIVE_TRANSFER_BONUSES below (current/upcoming only).
  */
@@ -26,50 +26,10 @@ export interface TransferBonus {
 export const TRANSFER_BONUS_SOURCE = {
   name: 'Frequent Miler',
   url: 'https://frequentmiler.com/current-point-transfer-bonuses/',
-  lastUpdated: '2026-07-21',
+  lastUpdated: '2026-08-03',
 } as const;
 
 export const ACTIVE_TRANSFER_BONUSES: TransferBonus[] = [
-  {
-    transferFrom: 'Chase Ultimate Rewards',
-    transferTo: 'IHG One Rewards',
-    bonusPercent: 100,
-    summary: '100% transfer bonus to IHG One Rewards',
-    baseTransferRatio: { fromPoints: 1_000, toPoints: 1_000 },
-    detailsUrl: 'https://frequentmiler.com/chase-is-offering-a-70-100-transfer-bonus-to-ihg-one-rewards-give-it-a-miss/',
-    startDate: '2026-07-15',
-    endDate: '2026-07-30',
-  },
-  {
-    transferFrom: 'Rove Miles',
-    transferTo: 'Frontier Miles',
-    bonusPercent: 25,
-    summary: '25% transfer bonus to Frontier Miles',
-    baseTransferRatio: { fromPoints: 1_000, toPoints: 1_000 },
-    detailsUrl: 'https://frequentmiler.com/frontier-added-as-a-rove-transfer-partner-get-25-transfer-bonus-through-7-31-26/',
-    startDate: '2026-07-01',
-    endDate: '2026-07-31',
-  },
-  {
-    transferFrom: 'Capital One Miles',
-    transferTo: 'EVA Air Infinity MileageLands',
-    bonusPercent: 30,
-    summary: '30% transfer bonus to EVA Air Infinity MileageLands',
-    baseTransferRatio: { fromPoints: 1_000, toPoints: 750 },
-    detailsUrl: 'https://frequentmiler.com/30-transfer-bonus-capital-one-miles-eva-air/',
-    startDate: '2026-07-01',
-    endDate: '2026-07-31',
-  },
-  {
-    transferFrom: 'Amex Membership Rewards',
-    transferTo: 'Virgin Atlantic Flying Club',
-    bonusPercent: 30,
-    summary: '30% transfer bonus to Virgin Atlantic Flying Club',
-    baseTransferRatio: { fromPoints: 1_000, toPoints: 1_000 },
-    detailsUrl: 'https://frequentmiler.com/30-percent-transfer-bonus-american-express-membership-rewards-virgin-atlantic/',
-    startDate: '2026-07-01',
-    endDate: '2026-07-31',
-  },
   {
     transferFrom: 'Rove Miles',
     transferTo: 'Qantas Frequent Flyer',
@@ -89,6 +49,66 @@ export const ACTIVE_TRANSFER_BONUSES: TransferBonus[] = [
     detailsUrl: 'https://frequentmiler.com/citi-thankyou-air-france-klm-flying-blue-20-percent-transfer-bonus/',
     startDate: '2026-07-19',
     endDate: '2026-08-22',
+  },
+  {
+    transferFrom: 'Chase Ultimate Rewards',
+    transferTo: 'IHG One Rewards',
+    bonusPercent: 70,
+    summary: '70% transfer bonus to IHG One Rewards',
+    baseTransferRatio: { fromPoints: 1_000, toPoints: 1_000 },
+    detailsUrl: 'https://frequentmiler.com/chase-is-offering-a-70-100-transfer-bonus-to-ihg-one-rewards-give-it-a-miss/',
+    startDate: '2026-07-31',
+    endDate: '2026-08-31',
+  },
+  {
+    transferFrom: 'Capital One Miles',
+    transferTo: 'Avianca LifeMiles',
+    bonusPercent: 15,
+    summary: '15% transfer bonus to Avianca LifeMiles',
+    baseTransferRatio: { fromPoints: 1_000, toPoints: 1_000 },
+    detailsUrl: 'https://frequentmiler.com/15-transfer-bonus-from-capital-one-to-lifemiles-avianca/',
+    startDate: '2026-08-01',
+    endDate: '2026-08-31',
+  },
+  {
+    transferFrom: 'Citi ThankYou Rewards',
+    transferTo: 'Turkish Airlines Miles & Smiles',
+    bonusPercent: 40,
+    summary: '40% transfer bonus to Turkish Airlines Miles & Smiles',
+    baseTransferRatio: { fromPoints: 1_000, toPoints: 1_000 },
+    detailsUrl: 'https://frequentmiler.com/current-point-transfer-bonuses/',
+    startDate: '2026-08-01',
+    endDate: '2026-08-31',
+  },
+  {
+    transferFrom: 'Amex Membership Rewards',
+    transferTo: 'British Airways Avios',
+    bonusPercent: 30,
+    summary: '30% transfer bonus to British Airways Avios',
+    baseTransferRatio: { fromPoints: 1_000, toPoints: 1_000 },
+    detailsUrl: 'https://frequentmiler.com/30-percent-transfer-bonus-american-express-membership-rewards-avios-british-airways-iberia-aer-lingus/',
+    startDate: '2026-08-03',
+    endDate: '2026-09-27',
+  },
+  {
+    transferFrom: 'Amex Membership Rewards',
+    transferTo: 'Iberia Avios',
+    bonusPercent: 30,
+    summary: '30% transfer bonus to Iberia Avios',
+    baseTransferRatio: { fromPoints: 1_000, toPoints: 1_000 },
+    detailsUrl: 'https://frequentmiler.com/30-percent-transfer-bonus-american-express-membership-rewards-avios-british-airways-iberia-aer-lingus/',
+    startDate: '2026-08-03',
+    endDate: '2026-09-27',
+  },
+  {
+    transferFrom: 'Amex Membership Rewards',
+    transferTo: 'Aer Lingus Avios',
+    bonusPercent: 30,
+    summary: '30% transfer bonus to Aer Lingus Avios',
+    baseTransferRatio: { fromPoints: 1_000, toPoints: 1_000 },
+    detailsUrl: 'https://frequentmiler.com/30-percent-transfer-bonus-american-express-membership-rewards-avios-british-airways-iberia-aer-lingus/',
+    startDate: '2026-08-03',
+    endDate: '2026-09-27',
   },
 ];
 
