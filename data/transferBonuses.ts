@@ -1,7 +1,7 @@
 /**
  * Manually maintained transfer bonus list.
  * Source snapshot: https://frequentmiler.com/current-point-transfer-bonuses/
- * Last synced: August 19, 2026
+ * Last synced: August 25, 2026
  *
  * To update: edit ACTIVE_TRANSFER_BONUSES below (current/upcoming only).
  */
@@ -26,19 +26,19 @@ export interface TransferBonus {
 export const TRANSFER_BONUS_SOURCE = {
   name: 'Frequent Miler',
   url: 'https://frequentmiler.com/current-point-transfer-bonuses/',
-  lastUpdated: '2026-08-19',
+  lastUpdated: '2026-08-25',
 } as const;
 
 export const ACTIVE_TRANSFER_BONUSES: TransferBonus[] = [
   {
-    transferFrom: 'Citi ThankYou Rewards',
-    transferTo: 'Air France KLM Flying Blue',
-    bonusPercent: 20,
-    summary: '20% transfer bonus to Air France KLM Flying Blue',
+    transferFrom: 'Multiple bank & hotel programs',
+    transferTo: 'Cathay Pacific Asia Miles',
+    bonusPercent: 10,
+    summary: '10% transfer bonus to Cathay Pacific Asia Miles (Amex, Citi, Capital One, Bilt, Wells Fargo, and select hotel programs; registration required)',
     baseTransferRatio: { fromPoints: 1_000, toPoints: 1_000 },
-    detailsUrl: 'https://frequentmiler.com/citi-thankyou-air-france-klm-flying-blue-20-percent-transfer-bonus/',
-    startDate: '2026-07-19',
-    endDate: '2026-08-22',
+    detailsUrl: 'https://frequentmiler.com/get-a-10-bonus-when-transferring-bank-or-hotel-points-to-cathay-pacific-asia-miles/',
+    startDate: '2026-07-27',
+    endDate: '2026-08-28',
   },
   {
     transferFrom: 'Chase Ultimate Rewards',
@@ -69,6 +69,16 @@ export const ACTIVE_TRANSFER_BONUSES: TransferBonus[] = [
     detailsUrl: 'https://frequentmiler.com/current-point-transfer-bonuses/',
     startDate: '2026-08-01',
     endDate: '2026-08-31',
+  },
+  {
+    transferFrom: 'Citi ThankYou Rewards',
+    transferTo: 'Leading Hotels of the World',
+    bonusPercent: 25,
+    summary: '25% transfer bonus to Leading Hotels of the World Leaders Club',
+    baseTransferRatio: { fromPoints: 1_000, toPoints: 200 },
+    detailsUrl: 'https://frequentmiler.com/citi-thankyou-leading-hotels-of-the-world-lhw-25-percent-transfer-bonus/',
+    startDate: '2026-08-23',
+    endDate: '2026-09-19',
   },
   {
     transferFrom: 'Amex Membership Rewards',
