@@ -1,7 +1,7 @@
 /**
  * Manually maintained transfer bonus list.
  * Source snapshot: https://frequentmiler.com/current-point-transfer-bonuses/
- * Last synced: August 25, 2026
+ * Last synced: September 2, 2026
  *
  * To update: edit ACTIVE_TRANSFER_BONUSES below (current/upcoming only).
  */
@@ -26,50 +26,10 @@ export interface TransferBonus {
 export const TRANSFER_BONUS_SOURCE = {
   name: 'Frequent Miler',
   url: 'https://frequentmiler.com/current-point-transfer-bonuses/',
-  lastUpdated: '2026-08-25',
+  lastUpdated: '2026-09-02',
 } as const;
 
 export const ACTIVE_TRANSFER_BONUSES: TransferBonus[] = [
-  {
-    transferFrom: 'Multiple bank & hotel programs',
-    transferTo: 'Cathay Pacific Asia Miles',
-    bonusPercent: 10,
-    summary: '10% transfer bonus to Cathay Pacific Asia Miles (Amex, Citi, Capital One, Bilt, Wells Fargo, and select hotel programs; registration required)',
-    baseTransferRatio: { fromPoints: 1_000, toPoints: 1_000 },
-    detailsUrl: 'https://frequentmiler.com/get-a-10-bonus-when-transferring-bank-or-hotel-points-to-cathay-pacific-asia-miles/',
-    startDate: '2026-07-27',
-    endDate: '2026-08-28',
-  },
-  {
-    transferFrom: 'Chase Ultimate Rewards',
-    transferTo: 'IHG One Rewards',
-    bonusPercent: 70,
-    summary: '70% transfer bonus to IHG One Rewards',
-    baseTransferRatio: { fromPoints: 1_000, toPoints: 1_000 },
-    detailsUrl: 'https://frequentmiler.com/chase-is-offering-a-70-100-transfer-bonus-to-ihg-one-rewards-give-it-a-miss/',
-    startDate: '2026-07-31',
-    endDate: '2026-08-31',
-  },
-  {
-    transferFrom: 'Capital One Miles',
-    transferTo: 'Avianca LifeMiles',
-    bonusPercent: 15,
-    summary: '15% transfer bonus to Avianca LifeMiles',
-    baseTransferRatio: { fromPoints: 1_000, toPoints: 1_000 },
-    detailsUrl: 'https://frequentmiler.com/15-transfer-bonus-from-capital-one-to-lifemiles-avianca/',
-    startDate: '2026-08-01',
-    endDate: '2026-08-31',
-  },
-  {
-    transferFrom: 'Citi ThankYou Rewards',
-    transferTo: 'Turkish Airlines Miles & Smiles',
-    bonusPercent: 40,
-    summary: '40% transfer bonus to Turkish Airlines Miles & Smiles',
-    baseTransferRatio: { fromPoints: 1_000, toPoints: 1_000 },
-    detailsUrl: 'https://frequentmiler.com/current-point-transfer-bonuses/',
-    startDate: '2026-08-01',
-    endDate: '2026-08-31',
-  },
   {
     transferFrom: 'Citi ThankYou Rewards',
     transferTo: 'Leading Hotels of the World',
@@ -119,6 +79,36 @@ export const ACTIVE_TRANSFER_BONUSES: TransferBonus[] = [
     detailsUrl: 'https://frequentmiler.com/get-20-bonus-when-transferring-chase-ultimate-rewards-to-air-canada-aeroplan-stack-with-10-cardholder-bonus/',
     startDate: '2026-08-12',
     endDate: '2026-09-30',
+  },
+  {
+    transferFrom: 'Rove Miles',
+    transferTo: 'Copa Airlines ConnectMiles',
+    bonusPercent: 40,
+    summary: '40% transfer bonus to Copa Airlines ConnectMiles',
+    baseTransferRatio: { fromPoints: 1_000, toPoints: 1_000 },
+    detailsUrl: 'https://frequentmiler.com/rove-copa-airlines-transfer-partner-bonus/',
+    startDate: '2026-09-01',
+    endDate: '2026-09-30',
+  },
+  {
+    transferFrom: 'Capital One Miles',
+    transferTo: 'JAL (Japan Airlines) Mileage Bank',
+    bonusPercent: 30,
+    summary: '30% transfer bonus to JAL Mileage Bank',
+    baseTransferRatio: { fromPoints: 1_000, toPoints: 750 },
+    detailsUrl: 'https://frequentmiler.com/capital-one-miles-jal-japan-airlines-30-percent-transfer-bonus/',
+    startDate: '2026-09-01',
+    endDate: '2026-09-30',
+  },
+  {
+    transferFrom: 'Amex Membership Rewards',
+    transferTo: 'Hilton Honors',
+    bonusPercent: 30,
+    summary: '30% transfer bonus to Hilton Honors',
+    baseTransferRatio: { fromPoints: 1_000, toPoints: 2_000 },
+    detailsUrl: 'https://frequentmiler.com/amex-membership-rewards-hilton-honors-30-percent-transfer-bonus/',
+    startDate: '2026-09-01',
+    endDate: '2026-10-14',
   },
 ];
 
